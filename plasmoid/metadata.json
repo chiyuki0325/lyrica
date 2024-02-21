@@ -13,7 +13,7 @@
     "Name": "Audacious Lyrics",
     "Name[zh_CN]": "Audacious 歌词",
     "Version": "1",
-    "Website": "https://github.com/chiyuki0325/AudaciousLyrics"
+    "Website": "https://github.com/chiyuki0325/PlasmaAudaciousLyrics"
   },
   "X-Plasma-API": "declarativeappletscript",
   "KPackageStructure": "Plasma/Applet"
