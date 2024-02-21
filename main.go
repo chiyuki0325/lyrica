@@ -29,7 +29,7 @@ var (
 )
 
 type LyricLine struct {
-	Time  int64  `json:"second"`
+	Time  int64  `json:"time"`
 	Lyric string `json:"lyric"`
 }
 
@@ -88,13 +88,14 @@ func handleUpgradeWebSocket(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "升级到 websocket 失败", http.StatusInternalServerError)
 		return
 	}
+	println("有新的连接")
 	defer conn.Close()
 	for {
 		msg := <-ch
+		_ = conn.WriteMessage(websocket.TextMessage, msg)
 		if isVerboseMode {
 			println(string(msg))
 		}
-		_ = conn.WriteMessage(websocket.TextMessage, msg)
 	}
 }
 

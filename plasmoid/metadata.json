@@ -1,0 +1,20 @@
+{
+  "KPlugin": {
+    "Authors": [
+      {
+        "Email": "me@chyk.ink",
+        "Name": "Kirikaze Chiyuki"
+      }
+    ],
+    "Category": "Multimedia",
+    "Description": "Real-time lyrics display for Audacious music player",
+    "Icon": "music-amarok",
+    "Id": "com.github.chiyuki0325.audaciouslyrics",
+    "Name": "Audacious Lyrics",
+    "Name[zh_CN]": "Audacious 歌词",
+    "Version": "1",
+    "Website": "https://github.com/chiyuki0325/AudaciousLyrics"
+  },
+  "X-Plasma-API": "declarativeappletscript",
+  "KPackageStructure": "Plasma/Applet"
+}

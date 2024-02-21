@@ -1,0 +1,10 @@
+[Unit]
+Description=Audacious lyrics daemon
+After=network.target
+
+[Install]
+WantedBy=default.target
+
+[Service]
+Type=simple
+ExecStart=/home/USERNAME/.local/bin/audacious-lyricsd
