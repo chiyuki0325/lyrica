@@ -97,9 +97,17 @@ func handleUpgradeWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 	for {
 		msg := <-ch
-		_ = conn.WriteMessage(websocket.TextMessage, msg)
+		_ = conn.SetWriteDeadline(time.Now().Add(time.Second))
+		err = conn.WriteMessage(websocket.TextMessage, msg)
 		if isVerboseMode {
 			println(string(msg))
+		}
+		if err != nil {
+			if isVerboseMode {
+				println("连接断开")
+			}
+			conn.Close()
+			break
 		}
 	}
 }
