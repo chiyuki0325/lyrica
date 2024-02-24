@@ -1,3 +1,5 @@
 audacious-lyricsd
 .idea/
 /.idea/
+build-**/
+AudaciousLyricsQML/build/
