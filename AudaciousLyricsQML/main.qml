@@ -66,6 +66,7 @@ ApplicationWindow {
         color: fontColor
         anchors.centerIn: parent
         ToolTip.delay: 1000
+        ToolTip.timeout: 5000
         ToolTip.visible: musicName ? showToolTip : false
         ToolTip.text: musicName + "\n" + musicArtist
         Repeater {
