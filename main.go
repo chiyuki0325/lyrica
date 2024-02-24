@@ -26,6 +26,7 @@ var (
 	currentLyricIdx int
 	ch              = make(chan []byte)
 	isVerboseMode   bool
+	isPlayerRunning bool
 )
 
 type LyricLine struct {
@@ -124,45 +125,70 @@ func parseLyrics() {
 func update() {
 	d, _ := dbus.ConnectSessionBus()
 	defer d.Close()
-	dbusObj := d.Object("org.mpris.MediaPlayer2.audacious", "/org/mpris/MediaPlayer2")
 	for {
 		// 处理更新
 		// 1: 每一秒更新，获取当前歌曲
-		dbusPropObj, _ := dbusObj.GetProperty("org.mpris.MediaPlayer2.Player.Metadata")
-		newMusicUrl := dbusPropObj.Value().(map[string]dbus.Variant)["xesam:url"].Value().(string)
+		dbusObj := d.Object("org.mpris.MediaPlayer2.audacious", "/org/mpris/MediaPlayer2")
+		dbusPropObj, err := dbusObj.GetProperty("org.mpris.MediaPlayer2.Player.Metadata")
+		if err != nil {
+			isPlayerRunning = false
+		} else {
+			isPlayerRunning = true
+		}
+
+		newMusicUrl := ""
+		if isPlayerRunning {
+			_newMusicUrlVariant := dbusPropObj.Value()
+			if _newMusicUrlVariant == nil {
+				newMusicUrl = ""
+				isPlayerRunning = false
+			} else {
+				newMusicUrl = _newMusicUrlVariant.(map[string]dbus.Variant)["xesam:url"].Value().(string)
+			}
+		}
 
 		if newMusicUrl != musicUrl {
 			musicUrl = newMusicUrl
-			// 歌曲更换
-			// (1) 解析歌曲文件头是否有歌词
-			musicFilePath, _ := parseFileUrl(musicUrl)
-			file, _ := os.Open(musicFilePath)
-			metadata, _ := tag.ReadFrom(file)
-			_lyrics := metadata.Lyrics()
-			if !(_lyrics == "") {
-				isLyrics = true
-				lyricsStr = _lyrics
-			} else {
-				// (2) 查找是否有 lrc 文件
-				lyricsFilePath := strings.TrimSuffix(musicFilePath, filepath.Ext(musicFilePath)) + ".lrc"
-				_, err := os.Stat(lyricsFilePath)
-				if err == nil {
-					// 有 lrc 文件
-					_lyrics, _ := os.ReadFile(lyricsFilePath)
-					lyricsStr = string(_lyrics)
-					isLyrics = true
-				} else {
-					// 无 lrc 文件
-					lyricsStr = ""
-					isLyrics = false
+			if !strings.HasPrefix(newMusicUrl, "file://") {
+				// 不是本地文件 或者 播放器未运行 或者 没有歌曲
+				if isVerboseMode {
+					println("状态更新，但不是本地文件，或者播放器未运行，或者没有歌曲")
 				}
-			}
-			// 此时如果有歌词则 lyrics 变量不为空
-			// (3) 获取歌曲信息
-			// 发送歌曲信息
-			b, _ := json.Marshal(MusicInfo{Title: metadata.Title(), Artist: metadata.Artist()})
-			ch <- b
+				musicInfo = MusicInfo{Title: "", Artist: ""}
+				isLyrics = false
+			} else {
+				// 歌曲更换
+				// (1) 解析歌曲文件头是否有歌词
+				musicFilePath, _ := parseFileUrl(musicUrl)
+				file, _ := os.Open(musicFilePath)
+				metadata, _ := tag.ReadFrom(file)
+				_lyrics := metadata.Lyrics()
+				if !(_lyrics == "") {
+					isLyrics = true
+					lyricsStr = _lyrics
+				} else {
+					// (2) 查找是否有 lrc 文件
+					lyricsFilePath := strings.TrimSuffix(musicFilePath, filepath.Ext(musicFilePath)) + ".lrc"
+					_, err := os.Stat(lyricsFilePath)
+					if err == nil {
+						// 有 lrc 文件
+						_lyrics, _ := os.ReadFile(lyricsFilePath)
+						lyricsStr = string(_lyrics)
+						isLyrics = true
+					} else {
+						// 无 lrc 文件
+						lyricsStr = ""
+						isLyrics = false
+					}
+				}
+				// 此时如果有歌词则 lyrics 变量不为空
 
+				// 获取歌曲信息
+				musicInfo = MusicInfo{Title: metadata.Title(), Artist: metadata.Artist()}
+			}
+			// 此时 musicInfo 和 isLyrics 都应该已经更新
+			b, _ := json.Marshal(musicInfo)
+			ch <- b
 			// 解析歌词
 			if isLyrics {
 				parseLyrics()
@@ -175,41 +201,52 @@ func update() {
 
 		i := 0
 		for i = 0; i < 40; i++ {
-			// 每 25ms 更新歌词
-			var playbackStatus string
-			_dbusResult, _ := dbusObj.GetProperty("org.mpris.MediaPlayer2.Player.PlaybackStatus")
-			playbackStatus = _dbusResult.Value().(string)
-			if playbackStatus == "Playing" {
-				isPlaying = true
-			} else {
-				isPlaying = false
-			}
-			_dbusResult, _ = dbusObj.GetProperty("org.mpris.MediaPlayer2.Player.Position")
-			_currentTime := _dbusResult.Value().(int64)
-			if _currentTime < currentTime {
-				// 换歌了，退出循环
-				currentTime = _currentTime
-				break
-			}
-			currentTime = _currentTime
-			if isPlaying && isLyrics {
-				// 有歌词
-				idx := 0
-				for _, lyric := range lyrics {
-					if lyric.Time >= currentTime {
-						break
+			if isPlayerRunning && isLyrics {
+				// 每 25ms 更新歌词
+				var playbackStatus string
+				_dbusResult, err := dbusObj.GetProperty("org.mpris.MediaPlayer2.Player.PlaybackStatus")
+				if err != nil {
+					// 播放器突然关闭了
+					if isVerboseMode {
+						println("播放器关闭了，歌词更新终止。")
 					}
-					idx++
+					isPlayerRunning = false
+					break
 				}
-				idx -= 1
-				if currentLyricIdx != idx {
-					if idx < 0 {
-						idx = 0
+
+				playbackStatus = _dbusResult.Value().(string)
+				if playbackStatus == "Playing" {
+					isPlaying = true
+				} else {
+					isPlaying = false
+				}
+				_dbusResult, _ = dbusObj.GetProperty("org.mpris.MediaPlayer2.Player.Position")
+				_currentTime := _dbusResult.Value().(int64)
+				if _currentTime < currentTime {
+					// 换歌了，退出循环
+					currentTime = _currentTime
+					break
+				}
+				currentTime = _currentTime
+				if isPlaying && isLyrics {
+					// 有歌词
+					idx := 0
+					for _, lyric := range lyrics {
+						if lyric.Time >= currentTime {
+							break
+						}
+						idx++
 					}
-					currentLyricIdx = idx
-					// 发送歌词
-					b, _ := json.Marshal(lyrics[idx])
-					ch <- b
+					idx -= 1
+					if currentLyricIdx != idx {
+						if idx < 0 {
+							idx = 0
+						}
+						currentLyricIdx = idx
+						// 发送歌词
+						b, _ := json.Marshal(lyrics[idx])
+						ch <- b
+					}
 				}
 			}
 			time.Sleep(time.Millisecond * 25)
