@@ -90,6 +90,10 @@ func handleUpgradeWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	println("有新的连接")
+	// 清空缓存
+	for len(ch) > 0 {
+		<-ch
+	}
 	defer conn.Close()
 	for {
 		msg := <-ch
