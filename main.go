@@ -15,18 +15,19 @@ import (
 )
 
 var (
-	upgrader        = websocket.Upgrader{}
-	musicUrl        string
-	lyricsStr       string
-	lyrics          []LyricLine
-	musicInfo       MusicInfo
-	isLyrics        bool
-	isPlaying       bool
-	currentTime     int64
-	currentLyricIdx int
-	ch              = make(chan []byte)
-	isVerboseMode   bool
-	isPlayerRunning bool
+	upgrader          = websocket.Upgrader{}
+	musicUrl          string
+	lyricsStr         string
+	lyrics            []LyricLine
+	musicInfo         MusicInfo
+	isLyrics          bool
+	isPlaying         bool
+	currentTime       int64
+	currentLyricIdx   int
+	ch                = make(chan []byte)
+	isVerboseMode     bool
+	isPlayerRunning   bool
+	isClientReceiving bool = false
 )
 
 type LyricLine struct {
@@ -94,6 +95,7 @@ func handleUpgradeWebSocket(w http.ResponseWriter, r *http.Request) {
 	for len(ch) > 0 {
 		<-ch
 	}
+	isClientReceiving = true
 	defer conn.Close()
 	for {
 		msg := <-ch
@@ -138,6 +140,11 @@ func update() {
 	d, _ := dbus.ConnectSessionBus()
 	defer d.Close()
 	for {
+		if !isClientReceiving {
+			// 客户端未在运行，等待，防止频道中积压过多歌词
+			time.Sleep(time.Second)
+			continue
+		}
 		// 处理更新
 		// 1: 每一秒更新，获取当前歌曲
 		dbusObj := d.Object("org.mpris.MediaPlayer2.audacious", "/org/mpris/MediaPlayer2")
