@@ -15,5 +15,8 @@
         <entry name="configuredFontSize" type="Int">
             <default>18</default>
         </entry>
+        <entry name="layoutHeight" type="Int">
+            <default>28</default>
+        </entry>
     </group>
 </kcfg>

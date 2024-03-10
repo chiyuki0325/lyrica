@@ -20,14 +20,14 @@ rm ~/.config/systemd/user/audacious-lyricsd.service
 ## 安装顶栏控件
 
 ```bash
-kpackagetool5 -i plasmoid
+cp -r plasmoid ~/.local/share/plasma/plasmoids/ink.chyk.audaciousLyrics
 systemctl restart --user plasma-plasmashell
 ```
 
 ## 卸载顶栏控件
 
 ```bash
-kpackagetool5 -u plasmoid
+rm -rf ~/.local/share/plasma/plasmoids/ink.chyk.audaciousLyrics
 systemctl restart --user plasma-plasmashell
 ```
 

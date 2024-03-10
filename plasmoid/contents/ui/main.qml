@@ -1,16 +1,18 @@
-import QtQuick 2.0
+import QtQuick 2.15
 import QtQuick.Layouts 1.1
-import org.kde.plasma.plasmoid 2.0
-import org.kde.plasma.core 2.0 as PlasmaCore
-import QtWebSockets 1.0
+import org.kde.plasma.plasmoid
+import org.kde.plasma.core as PlasmaCore
+import QtWebSockets
 
-Item {
+PlasmoidItem {
     id: root
-    Plasmoid.preferredRepresentation: Plasmoid.fullRepresentation
-    Plasmoid.fullRepresentation: Item {
+    preferredRepresentation: fullRepresentation
+    fullRepresentation: Item {
         id: oneLineLayout
+        anchors.fill: parent
         Layout.minimumWidth: text.contentWidth
-        Layout.minimumHeight = text.contentHeight
+        Layout.minimumHeight: plasmoid.configuration.layoutHeight
+        Layout.preferredWidth: Layout.minimumWidth
 
 
         function updateLayoutSize() {
@@ -32,6 +34,14 @@ Item {
             active: true
         }
 
+        Item {
+            id: offsetItem
+            width: 0
+            height: parent.height
+            x: 0
+            y: 0
+        }
+
         Text {
             property int fontSize: {
              return (plasmoid.configuration.shouldUseDefaultThemeFontSize)
@@ -40,6 +50,7 @@ Item {
             }
             id: text
             text: ""
+            height: plasmoid.configuration.layoutHeight
             verticalAlignment: Text.AlignVCenter
             font.pixelSize: fontSize
             color: PlasmaCore.Theme.textColor

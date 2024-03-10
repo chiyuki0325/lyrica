@@ -1,7 +1,7 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.5
+import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts 1.12
-import org.kde.kirigami 2.4 as Kirigami
+import org.kde.kirigami as Kirigami
 
 Kirigami.FormLayout {
     id: page
@@ -9,6 +9,7 @@ Kirigami.FormLayout {
     property alias cfg_characterLimit: characterLimit.text
     property alias cfg_shouldUseDefaultThemeFontSize: shouldUseDefaultThemeFontSize.checked
     property alias cfg_configuredFontSize: configuredFontSize.text
+    property alias cfg_layoutHeight: layoutHeight.text
 
     TextField {
         id: characterLimit
@@ -25,6 +26,13 @@ Kirigami.FormLayout {
     TextField {
         id: configuredFontSize
         Kirigami.FormData.label: i18n("Custom font size:")
+        placeholderText: i18n("")
+        validator: IntValidator {bottom: 0; top: 9999}
+    }
+
+    TextField {
+        id: layoutHeight
+        Kirigami.FormData.label: i18n("Layout Height:")
         placeholderText: i18n("")
         validator: IntValidator {bottom: 0; top: 9999}
     }
