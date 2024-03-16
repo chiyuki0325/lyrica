@@ -41,7 +41,7 @@ func main() {
 				config.Config.Verbose = true
 			}
 			if arg == "-h" || arg == "--help" {
-				println("Audacious 歌词服务器")
+				println("KDE Plasma 桌面歌词服务器")
 				println("By 斬風·千雪")
 				println("参数:")
 				println("  -v, --verbose: 启用详细模式")
@@ -57,7 +57,7 @@ func main() {
 	http.HandleFunc("/test", testHtml)
 	go updateMeta()
 	go updateLyrics()
-	println("在 http://localhost:15648 启动了 audacious-lyricsd 服务器")
+	println("在 http://localhost:15648 启动了桌面歌词服务器")
 	_ = http.ListenAndServe(":15648", nil)
 }
 
@@ -134,10 +134,22 @@ func updateMeta() {
 		}
 
 		if isPlayerRunning {
-			newMusicUrl := musicMeta["xesam:url"].Value().(string)
+			var newMusicUrl string
+			if _newmusicurlVariant := musicMeta["xesam:url"].Value(); _newmusicurlVariant != nil {
+				newMusicUrl = _newmusicurlVariant.(string)
+			} else if _newmusicurlVariant = musicMeta["mpris:artUrl"].Value(); _newmusicurlVariant != nil {
+				newMusicUrl = _newmusicurlVariant.(string)
+			} else {
+				// 无法获取到歌曲 URL
+				newMusicUrl = ""
+			}
+
 			if newMusicUrl != musicUrl {
 				// 歌曲更换
 				musicUrl = newMusicUrl
+				if config.Config.Verbose {
+					println("歌曲更换: " + musicUrl)
+				}
 
 				// 更新信息
 				b, _ := json.Marshal(types.MusicInfo{
@@ -150,7 +162,27 @@ func updateMeta() {
 				for key, provider := range lyric_providers.LyricProviders {
 					if slices.Contains(config.Config.EnabledLyricProviders, key) {
 						if provider.IsAvailable(newMusicUrl) {
-							lyricsStr, isLyrics = provider.GetLyric(newMusicUrl)
+							if provider.IsMetaMode() {
+								if config.Config.Verbose {
+									println("尝试使用 " + key + " 和元数据获取歌词")
+								}
+								lyricsStr, isLyrics = provider.GetLyricByMeta(musicMeta)
+							} else {
+								if config.Config.Verbose {
+									println("尝试使用 " + key + " 获取歌词")
+								}
+								lyricsStr, isLyrics = provider.GetLyric(newMusicUrl)
+							}
+							if isLyrics {
+								if config.Config.Verbose {
+									println("获取歌词成功")
+								}
+								break
+							}
+						} else {
+							if config.Config.Verbose {
+								println(key + " 不能获取此歌曲的歌词")
+							}
 						}
 					}
 				}

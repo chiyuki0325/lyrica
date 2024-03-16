@@ -7,33 +7,46 @@ import (
 
 type ConfigType struct {
 	Verbose               bool     `yaml:"verbose"`
-	BlockedPlayers        []string `yaml:"blocked_players"`
+	DisabledPlayers       []string `yaml:"disabled_players"`
 	EnabledLyricProviders []string `yaml:"enabled_lyric_providers"`
+	ProviderSettings      struct {
+		NetEase struct {
+			UseTranslateLyric bool `yaml:"use_translate_lyric"`
+		} `yaml:"netease"`
+		YesPlayMusic struct {
+			UseTranslateLyric bool `yaml:"use_translate_lyric"`
+		} `yaml:"yesplaymusic"`
+	} `yaml:"provider_settings"`
+	DisabledFolders []string `yaml:"disabled_folders"`
 }
+
+var ConfigDir string
 
 var Config = ConfigType{
 	Verbose: false,
-	BlockedPlayers: []string{
+	DisabledPlayers: []string{
 		"firefox",
 		"chromium",
 		"plasma-browser-integration",
 	},
 	EnabledLyricProviders: []string{
 		"file",
+		"yesplaymusic",
+		"netease",
 	},
 }
 
 func LoadConfig() {
 	// 获取配置文件目录
-	configDir := os.Getenv("XDG_CONFIG_HOME")
-	if configDir == "" {
-		configDir = os.Getenv("HOME") + "/.config"
+	ConfigDir = os.Getenv("XDG_CONFIG_HOME")
+	if ConfigDir == "" {
+		ConfigDir = os.Getenv("HOME") + "/.config"
 	}
 
-	configFilePath := configDir + "/desktop-lyrics-kde/config.yml"
+	configFilePath := ConfigDir + "/desktop-lyrics-kde/config.yml"
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		// 创建配置文件
-		_ = os.MkdirAll(configDir+"/desktop-lyrics-kde", 0755)
+		_ = os.MkdirAll(ConfigDir+"/desktop-lyrics-kde", 0755)
 		_, _ = os.Create(configFilePath)
 	}
 

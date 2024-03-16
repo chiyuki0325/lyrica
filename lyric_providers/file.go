@@ -1,7 +1,6 @@
 package lyric_providers
 
 import (
-	"PlasmaDesktopLyrics/config"
 	"github.com/dhowden/tag"
 	"net/url"
 	"os"
@@ -11,6 +10,12 @@ import (
 
 type FileLyricProvider struct {
 	ILyricProvider
+}
+
+func (f FileLyricProvider) Initialize() {}
+
+func (f FileLyricProvider) IsMetaMode() bool {
+	return false
 }
 
 func parseFileUrl(urlStr string) (filePath string, err error) {
@@ -55,25 +60,12 @@ func (f FileLyricProvider) GetLyric(musicUrl string) (string, bool) {
 			isLyrics = false
 		}
 	}
-	if config.Config.Verbose {
-		if isLyrics {
-			println("使用 file 成功获取到歌词")
-		} else {
-			println("使用 file 未能获取到歌词")
-		}
-	}
 	return lyricsStr, isLyrics
 }
 
 func (f FileLyricProvider) IsAvailable(musicUrl string) bool {
 	if strings.HasPrefix(musicUrl, "file://") {
-		if config.Config.Verbose {
-			println("file 可以处理此 URL")
-		}
 		return true
-	}
-	if config.Config.Verbose {
-		println("file 不能处理此 URL")
 	}
 	return false
 }

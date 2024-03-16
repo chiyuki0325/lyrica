@@ -1,5 +1,4 @@
-audacious-lyricsd
+plasma-desktop-lyrics-daemon
 .idea/
 /.idea/
 build-**/
-AudaciousLyricsQML/build/

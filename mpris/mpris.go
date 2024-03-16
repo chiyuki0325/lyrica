@@ -13,7 +13,7 @@ func ListPlayers(d *dbus.Conn) []string {
 	for _, service := range result {
 		if strings.HasPrefix(service, "org.mpris.MediaPlayer2.") {
 			// 检查是否在黑名单中
-			for _, blockedPlayer := range config.Config.BlockedPlayers {
+			for _, blockedPlayer := range config.Config.DisabledPlayers {
 				if strings.HasPrefix(service, "org.mpris.MediaPlayer2."+blockedPlayer) {
 					continue
 				}
