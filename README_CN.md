@@ -1,10 +1,6 @@
-# KDE Plasma Desktop Lyrics Widget
+# KDE Plasma 桌面歌词组件
 
-[简体中文](./README_CN.md)
-
-## Daemon
-
-### Build & Insstall
+## 构建并安装守护进程
 
 ```bash
 go build -o ~/.local/bin/plasma-desktop-lyrics-daemon
@@ -12,7 +8,7 @@ cat misc/plasma-desktop-lyrics.service | sed "s#USERNAME#$USER#" > ~/.config/sys
 systemctl enable --now --user plasma-desktop-lyrics.service
 ```
 
-### Uninstall
+## 卸载守护进程
 
 ```bash
 killall plasma-desktop-lyrics-daemon
@@ -21,16 +17,14 @@ systemctl disable --now --user plasma-desktop-lyrics
 rm ~/.config/systemd/user/plasma-desktop-lyrics.service
 ```
 
-## Plasma Widget
-
-### Install
+## 安装控件
 
 ```bash
 cp -r plasmoid ~/.local/share/plasma/plasmoids/ink.chyk.plasmaDesktopLyrics
 systemctl restart --user plasma-plasmashell.service
 ```
 
-### Uninstall
+## 卸载控件
 
 ```bash
 rm -rf ~/.local/share/plasma/plasmoids/ink.chyk.audaciousLyrics
