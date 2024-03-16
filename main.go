@@ -7,7 +7,6 @@ import (
 	"PlasmaDesktopLyrics/mpris"
 	"PlasmaDesktopLyrics/types"
 	"encoding/json"
-	"fmt"
 	"github.com/godbus/dbus/v5"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -28,6 +27,7 @@ var (
 	currentLyricIdx   int
 	ch                = make(chan []byte)
 	isPlayerRunning   bool
+	isPlayerPlaying   bool
 	isClientReceiving bool = false
 )
 
@@ -96,15 +96,6 @@ func handleUpgradeWebSocket(w http.ResponseWriter, r *http.Request) {
 func updateMeta() {
 	d, _ := dbus.ConnectSessionBus()
 	defer d.Close()
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("panic:", r)
-			b, _ := json.Marshal(types.MusicInfo{Title: "", Artist: ""})
-			ch <- b
-			b, _ = json.Marshal(types.LyricLine{Time: -1, Lyric: ""})
-			ch <- b
-		}
-	}()
 	for {
 		if !isClientReceiving {
 			// 客户端未在运行，等待，防止频道中积压过多歌词
@@ -124,7 +115,7 @@ func updateMeta() {
 
 		var musicMeta map[string]dbus.Variant
 
-		if isPlayerRunning {
+		if _isPlayerRunning {
 			player = players[0]
 			var ret bool
 			musicMeta, ret = mpris.GetMetadata(d, player)
@@ -135,9 +126,8 @@ func updateMeta() {
 		}
 
 		if _isPlayerRunning != isPlayerRunning {
-			// 播放器状态更改
 			isPlayerRunning = _isPlayerRunning
-			if !isPlayerRunning {
+			if !_isPlayerRunning {
 				// 播放器关闭了，流程终止
 				b, _ := json.Marshal(types.MusicInfo{Title: "", Artist: ""})
 				ch <- b
@@ -160,43 +150,64 @@ func updateMeta() {
 			}
 
 			if newMusicUrl != musicUrl {
-				// 歌曲更换
-				musicUrl = newMusicUrl
-				if config.Config.Verbose {
-					println("歌曲更换: " + musicUrl)
-				}
+				if newMusicUrl == "" {
+					musicUrl = ""
+					b, _ := json.Marshal(types.MusicInfo{Title: "", Artist: ""})
+					ch <- b
+					b, _ = json.Marshal(types.LyricLine{Time: -1, Lyric: ""})
+					ch <- b
+				} else {
+					// 歌曲更换
+					musicUrl = newMusicUrl
+					if config.Config.Verbose {
+						println("歌曲更换: " + musicUrl)
+					}
 
-				// 更新信息
-				b, _ := json.Marshal(types.MusicInfo{
-					Title:  musicMeta["xesam:title"].Value().(string),
-					Artist: musicMeta["xesam:artist"].Value().([]string)[0],
-				})
-				ch <- b
+					// 更新信息
+					_t := musicMeta["xesam:title"].Value()
+					_a := musicMeta["xesam:artist"].Value()
+					if _t == nil || _a == nil {
+						// 播放的不是音乐，或者播放的音乐没有数据标签
+						isPlayerPlaying = false
+						b, _ := json.Marshal(types.MusicInfo{Title: "", Artist: ""})
+						ch <- b
+						b, _ = json.Marshal(types.LyricLine{Time: -1, Lyric: ""})
+						ch <- b
+						continue
+					}
 
-				isLyrics = false
-				for key, provider := range lyric_providers.LyricProviders {
-					if slices.Contains(config.Config.EnabledLyricProviders, key) {
-						if provider.IsAvailable(newMusicUrl) {
-							if provider.IsMetaMode() {
-								if config.Config.Verbose {
-									println("尝试使用 " + key + " 和元数据获取歌词")
+					b, _ := json.Marshal(types.MusicInfo{
+						Title:  _t.(string),
+						Artist: _a.([]string)[0],
+					})
+					ch <- b
+					isPlayerPlaying = true
+
+					isLyrics = false
+					for key, provider := range lyric_providers.LyricProviders {
+						if slices.Contains(config.Config.EnabledLyricProviders, key) {
+							if provider.IsAvailable(newMusicUrl) {
+								if provider.IsMetaMode() {
+									if config.Config.Verbose {
+										println("尝试使用 " + key + " 和元数据获取歌词")
+									}
+									lyricsStr, isLyrics = provider.GetLyricByMeta(musicMeta)
+								} else {
+									if config.Config.Verbose {
+										println("尝试使用 " + key + " 获取歌词")
+									}
+									lyricsStr, isLyrics = provider.GetLyric(newMusicUrl)
 								}
-								lyricsStr, isLyrics = provider.GetLyricByMeta(musicMeta)
+								if isLyrics {
+									if config.Config.Verbose {
+										println("获取歌词成功")
+									}
+									break
+								}
 							} else {
 								if config.Config.Verbose {
-									println("尝试使用 " + key + " 获取歌词")
+									println(key + " 不能获取此歌曲的歌词")
 								}
-								lyricsStr, isLyrics = provider.GetLyric(newMusicUrl)
-							}
-							if isLyrics {
-								if config.Config.Verbose {
-									println("获取歌词成功")
-								}
-								break
-							}
-						} else {
-							if config.Config.Verbose {
-								println(key + " 不能获取此歌曲的歌词")
 							}
 						}
 					}
@@ -204,6 +215,9 @@ func updateMeta() {
 
 				if isLyrics {
 					lyrics = lyric_parser.ParseLyrics(lyricsStr)
+				} else {
+					b, _ := json.Marshal(types.LyricLine{Time: -1, Lyric: ""})
+					ch <- b
 				}
 			}
 		}
@@ -217,15 +231,19 @@ func updateLyrics() {
 	for {
 		i := 0
 		for i = 0; i < 40; i++ {
-			if isPlayerRunning && isLyrics {
+			if isPlayerRunning && isPlayerPlaying && isLyrics {
 				// 每 25ms 更新歌词
 				playbackStatus, err := mpris.GetPlaybackStatus(d, player)
 				if err != nil || playbackStatus == "" {
-					// 播放器突然关闭了
+					// 播放器突然关闭了，或是启动了新的播放器但是未开始播放
 					if config.Config.Verbose {
-						println("播放器关闭了，歌词更新终止。")
+						println("播放器关闭了")
 					}
-					isPlayerRunning = false
+					isPlayerPlaying = false
+					b, _ := json.Marshal(types.LyricLine{Time: -1, Lyric: ""})
+					ch <- b
+					b, _ = json.Marshal(types.MusicInfo{Title: "", Artist: ""})
+					ch <- b
 					break
 				}
 
