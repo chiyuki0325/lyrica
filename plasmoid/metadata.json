@@ -7,13 +7,13 @@
       }
     ],
     "Category": "Multimedia",
-    "Description": "Real-time lyrics display for Audacious music player",
+    "Description": "Real-time lyrics display for music players",
     "Icon": "music-amarok",
-    "Id": "ink.chyk.audaciousLyrics",
-    "Name": "Audacious Lyrics",
-    "Name[zh_CN]": "Audacious 歌词",
+    "Id": "ink.chyk.plasmaDesktopLyrics",
+    "Name": "Desktop Lyrics",
+    "Name[zh_CN]": "桌面歌词",
     "Version": "1",
-    "Website": "https://github.com/chiyuki0325/PlasmaAudaciousLyrics"
+    "Website": "https://github.com/chiyuki0325/PlasmaDesktopLyrics"
   },
   "X-Plasma-API-Minimum-Version": "6.0",
   "X-Plasma-MainScript": "ui/main.qml",
