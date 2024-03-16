@@ -40,6 +40,9 @@ func GetMetadata(d *dbus.Conn, player string) (map[string]dbus.Variant, bool) {
 func GetPlaybackStatus(d *dbus.Conn, player string) (string, error) {
 	dbusObj := d.Object(player, "/org/mpris/MediaPlayer2")
 	_dbusResult, err := dbusObj.GetProperty("org.mpris.MediaPlayer2.Player.PlaybackStatus")
+	if _dbusResult.Value() == nil {
+		return "", err
+	}
 	return _dbusResult.Value().(string), err
 }
 

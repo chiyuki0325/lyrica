@@ -7,6 +7,7 @@ import (
 	"PlasmaDesktopLyrics/mpris"
 	"PlasmaDesktopLyrics/types"
 	"encoding/json"
+	"fmt"
 	"github.com/godbus/dbus/v5"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -95,6 +96,15 @@ func handleUpgradeWebSocket(w http.ResponseWriter, r *http.Request) {
 func updateMeta() {
 	d, _ := dbus.ConnectSessionBus()
 	defer d.Close()
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("panic:", r)
+			b, _ := json.Marshal(types.MusicInfo{Title: "", Artist: ""})
+			ch <- b
+			b, _ = json.Marshal(types.LyricLine{Time: -1, Lyric: ""})
+			ch <- b
+		}
+	}()
 	for {
 		if !isClientReceiving {
 			// 客户端未在运行，等待，防止频道中积压过多歌词
@@ -112,11 +122,16 @@ func updateMeta() {
 			_isPlayerRunning = false
 		}
 
-		player = players[0]
-		musicMeta, ret := mpris.GetMetadata(d, player)
+		var musicMeta map[string]dbus.Variant
 
-		if !ret {
-			_isPlayerRunning = false
+		if isPlayerRunning {
+			player = players[0]
+			var ret bool
+			musicMeta, ret = mpris.GetMetadata(d, player)
+
+			if !ret {
+				_isPlayerRunning = false
+			}
 		}
 
 		if _isPlayerRunning != isPlayerRunning {
@@ -205,7 +220,7 @@ func updateLyrics() {
 			if isPlayerRunning && isLyrics {
 				// 每 25ms 更新歌词
 				playbackStatus, err := mpris.GetPlaybackStatus(d, player)
-				if err != nil {
+				if err != nil || playbackStatus == "" {
 					// 播放器突然关闭了
 					if config.Config.Verbose {
 						println("播放器关闭了，歌词更新终止。")

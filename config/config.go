@@ -28,6 +28,7 @@ var Config = ConfigType{
 		"firefox",
 		"chromium",
 		"plasma-browser-integration",
+		"kdeconnect",
 	},
 	EnabledLyricProviders: []string{
 		"file",
