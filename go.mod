@@ -1,4 +1,4 @@
-module AudaciousLyrics
+module PlasmaDesktopLyrics
 
 go 1.22.0
 
@@ -10,4 +10,5 @@ require (
 require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
