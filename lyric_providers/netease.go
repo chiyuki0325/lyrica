@@ -48,7 +48,7 @@ func (n NetEaseLyricProvider) GetLyricByMeta(musicMeta map[string]dbus.Variant) 
 		return "", false
 	}
 
-	musicLength := musicMeta["mpris:length"].Value().(int64) / 1000
+	musicLength := musicMeta["mpris:length"].Value().(int64) / 1000000
 	searchedMusicLength := int64(song["dt"].(float64))
 	// 如果相差大于 6 秒，则认为不是同一首歌
 	if musicLength < searchedMusicLength-6 || musicLength > searchedMusicLength+6 {
