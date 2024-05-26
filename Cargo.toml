@@ -1,0 +1,12 @@
+[package]
+name = "lyrica"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+"tokio" = {version = "1", features = ["full"]}
+"actix" = "0.13.3"
+"actix-web" = "4.6.0"
+"actix-web-actors" = "4.3.0"
+"serde" =  "1.0.203"
+"serde_json" = "1.0.117"

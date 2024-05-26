@@ -2,3 +2,4 @@ plasma-desktop-lyrics-daemon
 .idea/
 /.idea/
 build-**/
+target/
