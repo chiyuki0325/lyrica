@@ -1,10 +1,11 @@
 use std::sync::{Arc, RwLock};
+use serde::{Serialize, Deserialize};
 use crate::config;
 
 // source: https://stackoverflow.com/questions/53866508
 macro_rules! pub_struct {
     ($name:ident {$($field:ident: $t:ty,)*}) => {
-        #[derive(Debug, Clone, PartialEq)] // ewww
+        #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)] // ewww
         pub struct $name {
             $(pub $field: $t),*
         }

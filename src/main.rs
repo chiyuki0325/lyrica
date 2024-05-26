@@ -1,8 +1,8 @@
-mod test_page;
 mod websocket;
 mod lyric_parser;
 mod player;
 mod config;
+mod web_routes;
 
 use actix_web::{web, App, HttpServer, Responder};
 use tokio::sync::broadcast;
@@ -30,14 +30,16 @@ async fn main() -> std::io::Result<()> {
             let web_data_config = web::Data::new(config);
 
 
-            let loop_task = tokio::task::spawn_local(async {
+            tokio::task::spawn_local(async {
                 player::mpris_loop(tx1, config_clone).await;
             });
 
             // Start the actix-web server
             HttpServer::new(move || {
                 App::new()
-                    .route("/test", web::get().to(test_page::test_page))
+                    .route("/test", web::get().to(web_routes::test_page::test_page))
+                    .route("/config", web::get().to(web_routes::config::get_config))
+                    .route("/config/update", web::post().to(web_routes::config::update_config))
                     .app_data(web::Data::new(tx.clone()))
                     .app_data(web_data_config.clone())
                     .route("/ws", web::get().to(websocket::ws_index))
