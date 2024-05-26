@@ -1,46 +1,50 @@
 mod test_page;
 mod websocket;
 mod lyric_parser;
-mod mpris;
+mod player;
+mod config;
 
 use actix_web::{web, App, HttpServer, Responder};
-use tokio::time::{sleep, Duration};
 use tokio::sync::broadcast;
+use tokio::task::LocalSet;
+use crate::config::{initialize_config, SharedConfig};
 
 #[derive(Debug, Clone)]
 enum ChannelMessage {
-    UpdateLyricLine(String),
-    UpdateMusicInfo(String, String),
+    UpdateLyricLine(i64, String),      // time, lyric
+    UpdateMusicInfo(String, String),  // title, artist
 }
 
-
-async fn loop_function(tx: broadcast::Sender<ChannelMessage>) {
-    loop {
-        println!("This is a loop function running in the background.");
-        tx.send(ChannelMessage::UpdateLyricLine("QWQ Hello, world!".to_string())).unwrap();
-        sleep(Duration::from_secs(5)).await;
-    }
-}
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let (tx, _rx) = broadcast::channel(5);
+    let local_set = LocalSet::new();
+    // 在单线程环境中运行
+    local_set
+        .run_until(async move {
+            let (tx, _rx) = broadcast::channel(5);
+            let tx1 = tx.clone();
 
-    // Spawn the loop function as a background task
-    let tx2 = tx.clone();
-    let tx1 = tx.clone();
-    tokio::spawn(async {
-        loop_function(tx2).await;
-    });
+            let config = initialize_config();
+            let config_clone = config.clone();
+            let web_data_config = web::Data::new(config);
 
-    // Start the actix-web server
-    HttpServer::new(move || {
-        App::new()
-            .route("/test", web::get().to(test_page::test_page))
-            .app_data(web::Data::new(tx1.clone()))
-            .route("/ws", web::get().to(websocket::ws_index))
-    })
-        .bind("127.0.0.1:15648")?
-        .run()
+
+            let loop_task = tokio::task::spawn_local(async {
+                player::mpris_loop(tx1, config_clone).await;
+            });
+
+            // Start the actix-web server
+            HttpServer::new(move || {
+                App::new()
+                    .route("/test", web::get().to(test_page::test_page))
+                    .app_data(web::Data::new(tx.clone()))
+                    .app_data(web_data_config.clone())
+                    .route("/ws", web::get().to(websocket::ws_index))
+            })
+                .bind("127.0.0.1:15648")?
+                .run()
+                .await
+        })
         .await
 }

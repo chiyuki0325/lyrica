@@ -1,12 +1,40 @@
+use std::arch::x86_64::_lzcnt_u32;
 use actix::{Actor, AsyncContext, ActorFuture, StreamHandler, Handler};
 use actix_web::{web, HttpRequest, HttpResponse, Error};
 use actix_web_actors::ws;
 use tokio::sync::broadcast;
+use serde::Serialize;
 
 use crate::ChannelMessage;
+use crate::config::SharedConfig;
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct WebSocketPacket {
+    pub id: u8,
+    pub data: WebSocketPacketData,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) enum WebSocketPacketData {
+    lyric_line(UpdateLyricLinePacket),
+    music_info(UpdateMusicInfoPacket),
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct UpdateLyricLinePacket {
+    lyric: String,
+    time: i64
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct UpdateMusicInfoPacket {
+    title: String,
+    artist: String,
+}
 
 pub(crate) struct LyricaSocket {
     rx: broadcast::Receiver<ChannelMessage>,
+    config: SharedConfig,
 }
 
 impl Actor for LyricaSocket {
@@ -35,11 +63,33 @@ impl Handler<ChannelMessage> for LyricaSocket {
 
     fn handle(&mut self, msg: ChannelMessage, ctx: &mut Self::Context) {
         match msg {
-            ChannelMessage::UpdateLyricLine(lyric_line) => {
-                ctx.text(lyric_line);
+            ChannelMessage::UpdateLyricLine(time, lyric) => {
+                if self.config.read().unwrap().verbose {
+                    println!("[{time}] {lyric}");
+                }
+
+                let packet = WebSocketPacket {
+                    id: 1,
+                    data: WebSocketPacketData::lyric_line(UpdateLyricLinePacket {
+                        lyric: lyric,
+                        time: time,
+                    }),
+                };
+                ctx.text(serde_json::to_string(&packet).unwrap());
             }
             ChannelMessage::UpdateMusicInfo(title, artist) => {
-                ctx.text(format!("{} - {}", title, artist));
+                if self.config.read().unwrap().verbose {
+                    println!("[{title} - {artist}]");
+                }
+
+                let packet = WebSocketPacket {
+                    id: 0,
+                    data: WebSocketPacketData::music_info(UpdateMusicInfoPacket {
+                        title: title,
+                        artist: artist,
+                    }),
+                };
+                ctx.text(serde_json::to_string(&packet).unwrap());
             }
         }
     }
@@ -61,8 +111,10 @@ pub(crate) async fn ws_index(
     req: HttpRequest,
     stream: web::Payload,
     tx: web::Data<broadcast::Sender<ChannelMessage>>,
+    config: web::Data<SharedConfig>,
 ) -> Result<HttpResponse, Error> {
     ws::start(LyricaSocket {
         rx: tx.subscribe(),
+        config: config.get_ref().clone(),
     }, &req, stream)
 }
