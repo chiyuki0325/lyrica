@@ -7,12 +7,13 @@ import (
 	"PlasmaDesktopLyrics/mpris"
 	"PlasmaDesktopLyrics/types"
 	"encoding/json"
-	"github.com/godbus/dbus/v5"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"os"
 	"slices"
 	"time"
+
+	"github.com/godbus/dbus/v5"
+	"github.com/gorilla/websocket"
 )
 
 var (
@@ -276,8 +277,10 @@ func updateLyrics() {
 						}
 						currentLyricIdx = idx
 						// 发送歌词
-						b, _ := json.Marshal(lyrics[idx])
-						ch <- b
+						if idx < len(lyrics) {
+							b, _ := json.Marshal(lyrics[idx])
+							ch <- b
+						}
 					}
 				}
 			}
