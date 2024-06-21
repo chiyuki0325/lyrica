@@ -1,11 +1,14 @@
 struct LyricLine {
     pub time: i64,
     pub lyric: String,
+    pub tlyric: Option<String>,
 }
 
 pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
     let mut lyrics = Vec::new();
     let lines = lyric_string.lines();
+
+    let mut last_time = 0;
 
     for line in lines {
         let line = line.trim();
@@ -20,10 +23,17 @@ pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
 
             // 解析歌词
             let lyric_str = line_parts[1].trim().to_string();
-            lyrics.push(LyricLine {
-                time: (minute * 60000000 + (second * 1000000.0) as i64),
-                lyric: lyric_str,
-            });
+            let time = (minute * 60000000 + (second * 1000000.0) as i64);
+            if last_time == time {
+                lyrics.last_mut().unwrap().tlyric = Some(lyric_str);
+            } else {
+                lyrics.push(LyricLine {
+                    time: time,
+                    lyric: lyric_str,
+                    tlyric: None,
+                });
+            }
+            last_time = time;
         }
     }
 

@@ -3,13 +3,9 @@ use tokio::sync::broadcast;
 use tokio::time::sleep;
 use crate::ChannelMessage;
 use crate::config::SharedConfig;
+use crate::player_stream::MyPlayerStream;
 use async_std::stream::StreamExt;
 use std::sync::{Arc, Mutex};
-
-use mpris_async::{
-    player::PlayerStream,
-    stream_players
-};
 
 struct MprisInfo {
     url: String,
@@ -25,7 +21,7 @@ pub async fn mpris_loop(
         url: String::new(),
     })));
 
-    let mut player_stream: PlayerStream = stream_players(100);
+    let mut player_stream = MyPlayerStream::new(500);
     while let Some(player) = player_stream.next().await {
         // 得到播放器，进入循环
         if config.read().unwrap().verbose {
@@ -64,19 +60,16 @@ pub async fn mpris_loop(
                 Err(e) => {
                     // 播放器已经关闭。
                     if config.read().unwrap().verbose {
-                        println!("Player closed: {:?}", e);
+                        println!("Player closed, exiting loop...");
                     }
                     tx.send(ChannelMessage::UpdateMusicInfo("".to_string(), "".to_string())).unwrap();
+                    // 跳出 loop 块，继续等待下一个播放器
+                    break;
                 }
             }
             sleep(Duration::from_millis(50)).await;
         }
     }
 
-    /*
-    loop {
-        //println!("This is a loop function running in the background.");
-        //tx.send(ChannelMessage::UpdateLyricLine("QWQ Hello, world!".to_string())).unwrap();
-    }
-     */
+    todo!("在退出播放器后重启无法检测到")
 }

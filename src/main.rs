@@ -3,6 +3,7 @@ mod lyric_parser;
 mod player;
 mod config;
 mod web_routes;
+mod player_stream;
 
 use actix_web::{web, App, HttpServer, Responder};
 use tokio::sync::broadcast;
@@ -44,7 +45,7 @@ async fn main() -> std::io::Result<()> {
                     .app_data(web_data_config.clone())
                     .route("/ws", web::get().to(websocket::ws_index))
             })
-                .bind("127.0.0.1:15648")?
+                .bind("127.0.0.1:15649")?
                 .run()
                 .await
         })
