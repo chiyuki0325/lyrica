@@ -3,3 +3,4 @@ plasma-desktop-lyrics-daemon
 /.idea/
 build-**/
 target/
+**/*.kate-swp
