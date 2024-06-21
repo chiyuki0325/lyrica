@@ -7,9 +7,14 @@ use crate::player_stream::MyPlayerStream;
 use async_std::stream::StreamExt;
 use std::sync::{Arc, Mutex};
 use lyric_providers::LyricProvider;
+use crate::lyric_parser::{
+    parse_lyrics,
+    LyricLine,
+};
 
 struct MprisInfo {
     url: String,
+    is_lyric: bool,
 }
 
 type MprisCache = Arc<Mutex<MprisInfo>>;
@@ -20,6 +25,7 @@ pub async fn mpris_loop(
 ) {
     let mut cache = Arc::new(Mutex::new((MprisInfo {
         url: String::new(),
+        is_lyric: false,
     })));
 
     let mut player_stream = MyPlayerStream::new(500);
@@ -45,6 +51,8 @@ pub async fn mpris_loop(
                     let url = metadata.url().unwrap_or_default();
                     let mut cache = cache.lock().unwrap();
 
+                    let mut lyric: Vec<LyricLine> = Vec::new();
+
                     if cache.url != url {
                         // 歌曲更改
                         if config.read().unwrap().verbose {
@@ -58,6 +66,8 @@ pub async fn mpris_loop(
                         )).unwrap();
 
                         // 尝试获取歌词
+                        lyric = Vec::new();
+                        cache.is_lyric = false;
                         let lyric_providers = &lyric_providers::LYRIC_PROVIDERS;
                         for (name, provider) in lyric_providers.iter() {
                             if config.read().unwrap().enabled_lyric_providers.contains(name) {
@@ -67,12 +77,22 @@ pub async fn mpris_loop(
                                 // 这个 provider 可用
                                 if provider.is_available(&url) {
                                     // 这个 provider 可以处理这个 URL
-                                    let (lyric, success) = provider.get_lyric(&url);
+                                    let mut lyric_str = String::new();
+                                    let mut success = false;
+                                    if provider.is_meta_mode() {
+                                        (lyric_str, success) = provider.get_lyric_by_metadata(&metadata);
+                                    } else {
+                                        (lyric_str, success) = provider.get_lyric(&url);
+                                    }
                                     if success {
                                         // 成功获取歌词
                                         if config.read().unwrap().verbose {
                                             println!("Got lyric from provider: {}", name);
                                         }
+                                        // 解析歌词并且存入 lyric
+                                        lyric = parse_lyrics(lyric_str);
+                                        cache.is_lyric = true;
+                                        break;
                                     }
                                 }
                             }

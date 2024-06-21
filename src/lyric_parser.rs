@@ -1,4 +1,4 @@
-struct LyricLine {
+pub struct LyricLine {
     pub time: i64,
     pub lyric: String,
     pub tlyric: Option<String>,
