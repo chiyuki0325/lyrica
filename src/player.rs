@@ -1,11 +1,12 @@
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio::time::sleep;
-use crate::ChannelMessage;
+use crate::{ChannelMessage, lyric_providers};
 use crate::config::SharedConfig;
 use crate::player_stream::MyPlayerStream;
 use async_std::stream::StreamExt;
 use std::sync::{Arc, Mutex};
+use lyric_providers::LyricProvider;
 
 struct MprisInfo {
     url: String,
@@ -53,8 +54,29 @@ pub async fn mpris_loop(
 
                         tx.send(ChannelMessage::UpdateMusicInfo(
                             metadata.title().unwrap_or_default().to_string(),
-                            metadata.artists().unwrap_or_default()[0].to_string()
+                            metadata.artists().unwrap_or_default()[0].to_string(),
                         )).unwrap();
+
+                        // 尝试获取歌词
+                        let lyric_providers = &lyric_providers::LYRIC_PROVIDERS;
+                        for (name, provider) in lyric_providers.iter() {
+                            if config.read().unwrap().enabled_lyric_providers.contains(name) {
+                                if config.read().unwrap().verbose {
+                                    println!("Trying provider: {}", name);
+                                }
+                                // 这个 provider 可用
+                                if provider.is_available(&url) {
+                                    // 这个 provider 可以处理这个 URL
+                                    let (lyric, success) = provider.get_lyric(&url);
+                                    if success {
+                                        // 成功获取歌词
+                                        if config.read().unwrap().verbose {
+                                            println!("Got lyric from provider: {}", name);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 Err(e) => {
@@ -67,6 +89,7 @@ pub async fn mpris_loop(
                     break;
                 }
             }
+            // 歌词是否变化？
             sleep(Duration::from_millis(50)).await;
         }
     }

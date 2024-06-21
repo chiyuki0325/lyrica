@@ -5,7 +5,7 @@ struct LyricLine {
 }
 
 pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
-    let mut lyrics = Vec::new();
+    let mut lyrics: Vec<LyricLine> = Vec::new();
     let lines = lyric_string.lines();
 
     let mut last_time = 0;
