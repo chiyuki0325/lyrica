@@ -48,6 +48,8 @@ pub async fn mpris_loop(
         cache.lock().unwrap().player_running = true;
 
         let mut idx = 0;
+        let mut last_time: u128 = 0;
+        // 这个变量是循环上一次运行时的时间，用于判断进度条是否往左拉了
         let mut lyric: Vec<LyricLine> = Vec::new();
         let prefer_tlyric = config.read().unwrap().prefer_tlyric;
 
@@ -103,6 +105,7 @@ pub async fn mpris_loop(
                                         lyric = parse_lyrics(lyric_str);
                                         cache.is_lyric = true;
                                         idx = 0;
+                                        last_time = 0;
                                         break;
                                     }
                                 }
@@ -125,10 +128,19 @@ pub async fn mpris_loop(
 
             // 获取当前时间
             if cache.lock().unwrap().is_lyric {
-                let current_time = player.get_position().unwrap_or_default();
+                let current_time = player.get_position().unwrap_or_default().as_micros();
+
+                if current_time < last_time {
+                    // 进度条往左拉了，重置 idx
+                    idx = 0;
+                    while idx < lyric.len() && current_time >= lyric[idx].time {
+                        idx += 1;
+                    }
+                }
+
                 let line = lyric.get(idx);
                 if let Some(line) = line {
-                    if current_time.as_micros() >= line.time {
+                    if current_time >= line.time {
                         // 歌词变化
                         tx.send(ChannelMessage::UpdateLyricLine(
                             line.time,
@@ -138,14 +150,16 @@ pub async fn mpris_loop(
                                 line.lyric.clone()
                             })
                         ).unwrap();
-                        idx += 1;
+                        while idx < lyric.len() && current_time >= lyric[idx].time {
+                            idx += 1;
+                        }
                     }
                 }
+
+                last_time = current_time;
             }
 
             sleep(Duration::from_millis(50)).await;
         }
     }
-
-    todo!("在退出播放器后重启无法检测到")
 }
