@@ -15,7 +15,7 @@ The project's name comes from the Touhou Project character Lyrica Prismriver.
 ### Project status
 
 - [x] LRC parser
-- [ ] Lyric timing
+- [x] Lyric timing
 - [x] File lyric provider
 - [ ] NetEase Cloud Music lyric provider
 - [ ] Fetch lyrics from players' APIs (musicfox, yesplaymusic, etc.)
