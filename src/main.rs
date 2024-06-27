@@ -13,7 +13,7 @@ use crate::config::{initialize_config, SharedConfig};
 
 #[derive(Debug, Clone)]
 enum ChannelMessage {
-    UpdateLyricLine(i64, String),      // time, lyric
+    UpdateLyricLine(u128, String),      // time, lyric
     UpdateMusicInfo(String, String),  // title, artist
 }
 
@@ -35,6 +35,8 @@ async fn main() -> std::io::Result<()> {
             tokio::task::spawn_local(async {
                 player::mpris_loop(tx1, config_clone).await;
             });
+
+            println!("Lyrica is running at port 15649");
 
             // Start the actix-web server
             HttpServer::new(move || {

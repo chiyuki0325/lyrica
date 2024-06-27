@@ -15,6 +15,7 @@ use crate::lyric_parser::{
 struct MprisInfo {
     url: String,
     is_lyric: bool,
+    player_running: bool,
 }
 
 type MprisCache = Arc<Mutex<MprisInfo>>;
@@ -26,13 +27,14 @@ pub async fn mpris_loop(
     let mut cache = Arc::new(Mutex::new((MprisInfo {
         url: String::new(),
         is_lyric: false,
+        player_running: false,
     })));
 
     let mut player_stream = MyPlayerStream::new(500);
     while let Some(player) = player_stream.next().await {
         // 得到播放器，进入循环
         if config.read().unwrap().verbose {
-            println!("New player connected: {:?}", player);
+            println!("New player connected: {:?}", player.bus_name());
         }
         let player_name = String::from(player.bus_name());
         let player_name = player_name.strip_prefix("org.mpris.MediaPlayer2.").unwrap();
@@ -43,15 +45,23 @@ pub async fn mpris_loop(
             continue;
         }
 
+        cache.lock().unwrap().player_running = true;
+
+        let mut idx = 0;
+        let mut lyric: Vec<LyricLine> = Vec::new();
+        let prefer_tlyric = config.read().unwrap().prefer_tlyric;
+
         loop {
             // 主循环，此时 player 已被移动到此大括号中
             match player.get_metadata() {
                 Ok(metadata) => {
                     // 判断歌曲是否更改
-                    let url = metadata.url().unwrap_or_default();
+                    let url = metadata.url().unwrap_or(
+                        metadata.art_url().unwrap_or_default()
+                    );
+
                     let mut cache = cache.lock().unwrap();
 
-                    let mut lyric: Vec<LyricLine> = Vec::new();
 
                     if cache.url != url {
                         // 歌曲更改
@@ -92,6 +102,7 @@ pub async fn mpris_loop(
                                         // 解析歌词并且存入 lyric
                                         lyric = parse_lyrics(lyric_str);
                                         cache.is_lyric = true;
+                                        idx = 0;
                                         break;
                                     }
                                 }
@@ -106,10 +117,32 @@ pub async fn mpris_loop(
                     }
                     tx.send(ChannelMessage::UpdateMusicInfo("".to_string(), "".to_string())).unwrap();
                     // 跳出 loop 块，继续等待下一个播放器
+                    cache.lock().unwrap().player_running = false;
                     break;
                 }
             }
             // 歌词是否变化？
+
+            // 获取当前时间
+            if cache.lock().unwrap().is_lyric {
+                let current_time = player.get_position().unwrap_or_default();
+                let line = lyric.get(idx);
+                if let Some(line) = line {
+                    if current_time.as_micros() >= line.time {
+                        // 歌词变化
+                        tx.send(ChannelMessage::UpdateLyricLine(
+                            line.time,
+                            if prefer_tlyric && line.tlyric.is_some() {
+                                line.tlyric.clone().unwrap()
+                            } else {
+                                line.lyric.clone()
+                            })
+                        ).unwrap();
+                        idx += 1;
+                    }
+                }
+            }
+
             sleep(Duration::from_millis(50)).await;
         }
     }

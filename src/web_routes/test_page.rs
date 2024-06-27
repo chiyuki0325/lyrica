@@ -9,13 +9,12 @@ pub(crate) async fn test_page() -> impl Responder {
         <html>
         <body>
         <script>
-            ws = new WebSocket("ws://localhost:15648/ws")
+            ws = new WebSocket("ws://localhost:15649/ws")
             ws.onmessage = function(event) {
                 console.log(event.data)
             }
             ws.onopen = function(event) {
-                console.log("连接成功")
-                ws.send("hello")
+                console.log("WebSocket connection established")
             }
         </script>
         </body>
