@@ -14,7 +14,7 @@ macro_rules! pub_struct {
 
 pub_struct!(Config {
     verbose: bool,
-    prefer_tlyric: bool,
+    tlyric_mode: u8,
     disabled_players: Vec<String>,
     enabled_lyric_providers: Vec<String>,
     disabled_folders: Vec<String>,
@@ -26,7 +26,11 @@ pub type SharedConfig = Arc<RwLock<Config>>;
 pub fn initialize_config() -> SharedConfig {
     let config = Config {
         verbose: true,
-        prefer_tlyric: true,
+        tlyric_mode: 1,
+        // 0: always use original lyric
+        // 1: show tlyric instead of lyric if available
+        // 2: Lyric | TLyric
+        // 3: TLyric | Lyric
         disabled_players: vec![
             "firefox".to_string(),
             "chromium".to_string(),

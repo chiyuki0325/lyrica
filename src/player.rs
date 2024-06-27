@@ -51,7 +51,7 @@ pub async fn mpris_loop(
         let mut last_time: u128 = 0;
         // 这个变量是循环上一次运行时的时间，用于判断进度条是否往左拉了
         let mut lyric: Vec<LyricLine> = Vec::new();
-        let prefer_tlyric = config.read().unwrap().prefer_tlyric;
+        let tlyric_mode = config.read().unwrap().tlyric_mode;
 
         loop {
             // 主循环，此时 player 已被移动到此大括号中
@@ -142,14 +142,18 @@ pub async fn mpris_loop(
                 if let Some(line) = line {
                     if current_time >= line.time {
                         // 歌词变化
-                        tx.send(ChannelMessage::UpdateLyricLine(
-                            line.time,
-                            if prefer_tlyric && line.tlyric.is_some() {
-                                line.tlyric.clone().unwrap()
-                            } else {
-                                line.lyric.clone()
-                            })
-                        ).unwrap();
+                        let line_lyric = if line.tlyric.is_some() {
+                            match tlyric_mode {
+                                1 => line.tlyric.clone().unwrap(),
+                                2 => format!("{} | {}", line.lyric, line.tlyric.clone().unwrap()),
+                                3 => format!("{} | {}", line.tlyric.clone().unwrap(), line.lyric),
+                                _ => line.lyric.clone(),
+                            }
+                        } else {
+                            line.lyric.clone()
+                        };
+
+                        tx.send(ChannelMessage::UpdateLyricLine(line.time, line_lyric)).unwrap();
                         while idx < lyric.len() && current_time >= lyric[idx].time {
                             idx += 1;
                         }
