@@ -6,7 +6,7 @@ import QtWebSockets
 
 PlasmoidItem {
     id: root
-    preferredRepresentation: fullRepresentation
+    preferredRepresentation: fullRepres entation
     fullRepresentation: Item {
         id: oneLineLayout
         anchors.fill: parent
@@ -16,7 +16,7 @@ PlasmoidItem {
 
 
         function updateLayoutSize() {
-            Layout.minimumWidth = text.contentWidth
+            Layout.minimumWidth = text.contentWidt  h
         }
 
         Timer {
@@ -24,27 +24,41 @@ PlasmoidItem {
         }
 
         function delay(delayTime,cb) {
-            timer.interval = delayTime;
-            timer.repeat = false;
-            timer.triggered.connect(cb);
-            timer.start();
+            timer.interval = delayTime
+            timer.repeat = false
+            timer.triggered.connect(cb)
+            timer.start()
         }
 
         WebSocket {
             id: socket
             url: "ws://127.0.0.1:15649/ws"
             onTextMessageReceived: function(message) {
-                var lyric = JSON.parse(message).lyric || ""
-                if (lyric.length > plasmoid.configuration.characterLimit) {
-                    lyric = lyric.slice(0, plasmoid.configuration.characterLimit) + "..."
+                message = JSON.parse(message)
+                switch (message.id) {
+                    case 0:
+                        // Update music metadata
+                        text.text = ""
+                        updateLayoutSize()
+                        break
+                    case 1:
+                        // Update lyric line
+                        var lyric = message.data.lyric_line.lyric || ""
+                        if (lyric.length > plasmoid.configuration.characterLimit) {
+                            lyric = lyric.slice(0, plasmoid.configuration.characterLimit) + "..."
+                        }
+                        text.text = lyric
+                        updateLayoutSize()
+                        break
                 }
-                text.text = lyric
-                updateLayoutSize()
-                return
             }
             onStatusChanged: function(status) {
                 if (status == WebSocket.Closed || status == WebSocket.Error) {
-                    text.text = "[" + i18n("Reconnecting") + "...]"
+                    if (plasmoid.configuration.showReconnectingText) {
+                        text.text = "[" + i18n("Reconnecting") + "...]"
+                    } else {
+                        text.text = ""
+                    }
                     updateLayoutSize()
                     socket.active = false
                     delay(500, function() {
@@ -52,6 +66,18 @@ PlasmoidItem {
                             socket.active = true
                         }
                     })
+                } else if (status == WebSocket.Open) {
+                    // Send config
+                    var xhr = new XMLHttpRequest()
+                    xhr.open("POST", "http://127.0.0.1:15649/config/update", true)
+                    xhr.setRequestHeader("Content-Type", "application/json")
+                    xhr.send(JSON.stringify({
+                        verbose: plasmoid.configuration.verbose,
+                        tlyric_mode: plasmoid.configuration.tlyricMode,
+                        disabled_players: plasmoid.configuration.disabledPlayers.split(","),
+                        enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(","),
+                        disabled_folders: plasmoid.configuration.disabledFolders.split("\n")
+                    }))
                 }
             }
             active: true

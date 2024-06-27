@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+        http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+    <kcfgfile name=""/>
+
+    <group name="Frontend">
+        <entry name="characterLimit" type="Int">
+            <default>60</default>
+        </entry>
+        <entry name="shouldUseDefaultThemeFontSize" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="configuredFontSize" type="Int">
+            <default>18</default>
+        </entry>
+        <entry name="layoutHeight" type="Int">
+            <default>28</default>
+        </entry>
+        <entry name="showReconnectingText" type="Bool">
+            <default>true</default>
+        </entry>
+
+    </group>
+    <group name="Backend">
+        <entry name="verbose" type="Bool">
+            <default>false</default>
+        </entry>
+        <entry name="tlyricMode" type="Int">
+            <default>0</default>
+            <!-- 0: always use original lyric -->
+            <!-- 1: show tlyric instead of lyric if available -->
+            <!-- 2: Lyric | TLyric -->
+            <!-- 3: TLyric | Lyric -->
+        </entry>
+        <entry name="disabledPlayers" type="String">
+            <default>firefox,chromium,plasma-browser-integration,kdeconnect</default>
+        </entry>
+        <entry name="enabledLyricProviders" type="String">
+            <default>file,netease,yesplaymusic</default>
+        </entry>
+        <entry name="disabledFolders" type="String">
+            <default/>
+        </entry>
+    </group>
+</kcfg>
