@@ -1,10 +1,14 @@
 # KDE Plasma Desktop Lyrics Widget
 
+# The widget is being rewritten in Rust and the current version will be soon deprecated.
+
+# Check [next branch](https://github.com/chiyuki0325/PlasmaDesktopLyrics/tree/next) for the new version.
+
 [简体中文](./README_CN.md)
 
 ## Daemon
 
-### Build & Insstall
+### Build & Install
 
 ```bash
 go build -o ~/.local/bin/plasma-desktop-lyrics-daemon
