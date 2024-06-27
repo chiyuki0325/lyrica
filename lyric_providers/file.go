@@ -1,11 +1,12 @@
 package lyric_providers
 
 import (
-	"github.com/dhowden/tag"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/dhowden/tag"
 )
 
 type FileLyricProvider struct {
@@ -40,7 +41,10 @@ func (f FileLyricProvider) GetLyric(musicUrl string) (string, bool) {
 	// (1) 解析歌曲文件头是否有歌词
 	musicFilePath, _ := parseFileUrl(musicUrl)
 	file, _ := os.Open(musicFilePath)
-	metadata, _ := tag.ReadFrom(file)
+	metadata, err := tag.ReadFrom(file)
+	if err != nil {
+		return "", false
+	}
 	_lyrics := metadata.Lyrics()
 	if !(_lyrics == "") {
 		isLyrics = true
