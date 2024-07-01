@@ -14,10 +14,10 @@ pub(crate) struct WebSocketPacket {
 }
 
 #[derive(Debug, Clone, Serialize)]
-#[allow(non_camel_case_types)]
+#[serde(rename_all = "snake_case")]
 pub(crate) enum WebSocketPacketData {
-    lyric_line(UpdateLyricLinePacket),
-    music_info(UpdateMusicInfoPacket),
+    LyricLine(UpdateLyricLinePacket),
+    MusicInfo(UpdateMusicInfoPacket),
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -76,7 +76,7 @@ impl Handler<ChannelMessage> for LyricaSocket {
 
                 let packet = WebSocketPacket {
                     id: 1,
-                    data: WebSocketPacketData::lyric_line(UpdateLyricLinePacket {
+                    data: WebSocketPacketData::LyricLine(UpdateLyricLinePacket {
                         lyric, time,
                     }),
                 };
@@ -89,7 +89,7 @@ impl Handler<ChannelMessage> for LyricaSocket {
 
                 let packet = WebSocketPacket {
                     id: 0,
-                    data: WebSocketPacketData::music_info(UpdateMusicInfoPacket {
+                    data: WebSocketPacketData::MusicInfo(UpdateMusicInfoPacket {
                         title, artist,
                     }),
                 };
