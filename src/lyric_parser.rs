@@ -1,3 +1,5 @@
+use std::str::Lines;
+
 pub struct LyricLine {
     pub time: u128,
     pub lyric: String,
@@ -24,26 +26,31 @@ fn parse_single_line(line: String) -> Result<(u128, String), ()> {
     Err(())
 }
 
-pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
+pub(crate) fn parse_lyrics(lyric_lines: Lines) -> Vec<LyricLine> {
     let mut lyrics: Vec<LyricLine> = Vec::new();
-    let lines = lyric_string.lines();
 
-    let mut last_time = 0;
-
-    for line in lines {
+    for line in lyric_lines {
         if let Ok((time, lyric_str)) = parse_single_line(String::from(line)) {
-            if last_time == time {
-                if let Some(last_lyric) = lyrics.last_mut() {
-                    last_lyric.tlyric = Some(lyric_str);
+            let mut idx = 0;
+            while idx < lyrics.len() {
+                if let Some(lyric_line) = lyrics.get(idx) {
+                    if lyric_line.time < time {
+                        idx += 1;
+                    } else if lyric_line.time == time {
+                        // 这句歌词是该歌词的翻译
+                        lyrics[idx].tlyric = Some(lyric_str);
+                        break;
+                    } else {
+                        // 是新的一句歌词
+                        lyrics.insert(idx, LyricLine {
+                            time,
+                            lyric: lyric_str,
+                            tlyric: None,
+                        });
+                        break;
+                    }
                 }
-            } else {
-                lyrics.push(LyricLine {
-                    time,
-                    lyric: lyric_str,
-                    tlyric: None,
-                });
             }
-            last_time = time;
         }
     }
 
@@ -55,36 +62,7 @@ pub(crate) fn parse_netease_lyrics(
     lyric_lines: Vec<String>,
     tlyric_lines: Vec<String>,
 ) -> Vec<LyricLine> {
-    // for netease provider
-    let mut lyrics: Vec<LyricLine> = Vec::new();
-
-    for line in lyric_lines {
-        if let Ok((time, lyric_str)) = parse_single_line(line) {
-            lyrics.push(LyricLine {
-                time,
-                lyric: lyric_str,
-                tlyric: None,
-            });
-        }
-    }
-
-    let mut last_idx = 0;
-
-    for line in tlyric_lines {
-        if let Ok((time, lyric_str)) = parse_single_line(line) {
-            let mut idx = last_idx;
-            while idx < lyrics.len() && lyrics[idx].time < time {
-                idx += 1;
-            }
-            // 此时应该等于
-            if let Some(lyric_line) = lyrics.get_mut(idx) {
-                if lyric_line.time == time {
-                    lyric_line.tlyric = Some(lyric_str);
-                    last_idx = idx;
-                }
-            }
-        }
-    }
-
-    return lyrics;
+    parse_lyrics(
+        (lyric_lines.join("\n") + "\n" + &tlyric_lines.join("\n")).lines()
+    )
 }

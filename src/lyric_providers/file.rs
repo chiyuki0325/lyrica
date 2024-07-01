@@ -17,12 +17,12 @@ impl FileLyricProvider {
                 // 此时得到了音乐文件的路径
                 if let Ok(lyric) = Self::read_tag_lyric(&path) {
                     // 读取 tag 成功
-                    (parse_lyrics(lyric), true)
+                    (parse_lyrics(lyric.lines()), true)
                 } else {
                     // 音乐没有 tag，直接读取 lrc
                     if let Ok(lrc) = Self::read_lrc_file(&path) {
                         // lrc 文件存在
-                        (parse_lyrics(lrc), true)
+                        (parse_lyrics(lrc.lines()), true)
                     } else {
                         // lrc 文件也不存在
                         (Vec::new(), false)
