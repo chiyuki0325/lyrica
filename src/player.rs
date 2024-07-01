@@ -35,12 +35,19 @@ pub async fn mpris_loop(
             println!("New player connected: {:?}", player.bus_name());
         }
         let player_name = String::from(player.bus_name());
-        let player_name = player_name.strip_prefix("org.mpris.MediaPlayer2.").unwrap()
-            .split_once('.').unwrap().0.to_string();
-        if config.read().unwrap().disabled_players.contains(&player_name) {
-            if config.read().unwrap().verbose {
-                println!("Player {} detected, but disabled in the config.", player_name);
+        let player_name = player_name.strip_prefix("org.mpris.MediaPlayer2.").unwrap();
+
+        let mut is_disabled = false;
+        for disabled_player in config.read().unwrap().disabled_players.iter() {
+            if player_name.starts_with(disabled_player) {
+                if config.read().unwrap().verbose {
+                    println!("Player {} detected, but disabled in the config.", player_name);
+                }
+                is_disabled = true;
+                break;
             }
+        }
+        if is_disabled {
             continue;
         }
 
