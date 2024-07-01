@@ -24,7 +24,8 @@ async fn main() -> std::io::Result<()> {
     // 在单线程环境中运行
     local_set
         .run_until(async move {
-            let (tx, _rx) = broadcast::channel(5);
+            let tx = broadcast::Sender::new(6);
+            // 最多同时有 3 个客户端
             let tx1 = tx.clone();
 
             let config = initialize_config();
