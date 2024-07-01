@@ -80,29 +80,22 @@ pub async fn mpris_loop(
                         // 尝试获取歌词
                         lyric = Vec::new();
                         cache.is_lyric = false;
-                        let lyric_providers = &lyric_providers::LYRIC_PROVIDERS;
-                        for (name, provider) in lyric_providers.iter() {
-                            if config.read().unwrap().enabled_lyric_providers.contains(name) {
+                        for (name, provider) in lyric_providers::LYRIC_PROVIDERS.iter() {
+                            if config.read().unwrap().enabled_lyric_providers.contains(&(name.to_string())) {
                                 if config.read().unwrap().verbose {
                                     println!("Trying provider: {}", name);
                                 }
                                 // 这个 provider 可用
                                 if provider.is_available(&url) {
                                     // 这个 provider 可以处理这个 URL
-                                    let mut lyric_str = String::new();
                                     let mut success = false;
-                                    if provider.is_meta_mode() {
-                                        (lyric_str, success) = provider.get_lyric_by_metadata(&metadata);
-                                    } else {
-                                        (lyric_str, success) = provider.get_lyric(&url);
-                                    }
+                                    (lyric, success) = provider.get_lyric(&url, &metadata).await;
                                     if success {
                                         // 成功获取歌词
                                         if config.read().unwrap().verbose {
                                             println!("Got lyric from provider: {}", name);
                                         }
                                         // 解析歌词并且存入 lyric
-                                        lyric = parse_lyrics(lyric_str);
                                         cache.is_lyric = true;
                                         idx = 0;
                                         last_time = 0;

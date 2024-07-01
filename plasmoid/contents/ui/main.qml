@@ -6,7 +6,7 @@ import QtWebSockets
 
 PlasmoidItem {
     id: root
-    preferredRepresentation: fullRepres entation
+    preferredRepresentation: fullRepresentation
     fullRepresentation: Item {
         id: oneLineLayout
         anchors.fill: parent
@@ -16,7 +16,7 @@ PlasmoidItem {
 
 
         function updateLayoutSize() {
-            Layout.minimumWidth = text.contentWidt  h
+            Layout.minimumWidth = text.contentWidth
         }
 
         Timer {
@@ -105,5 +105,18 @@ PlasmoidItem {
             color: PlasmaCore.Theme.textColor
         }
 
+        Plasmoid.contextualActions: [
+            PlasmaCore.Action {
+                text: i18nc("Reload configuration", "Reload")
+                icon.name: "view-refresh-symbolic"
+                priority: PlasmaCore.Action.LowPriority
+                onTriggered: {
+                    socket.active = false
+                    delay(200, function() {
+                        socket.active = true
+                    })
+                }
+            }
+        ]
     }
 }

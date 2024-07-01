@@ -17,10 +17,16 @@ The project's name comes from the Touhou Project character Lyrica Prismriver.
 - [x] LRC parser
 - [x] Lyric timing
 - [x] File lyric provider
-- [ ] NetEase Cloud Music lyric provider
-- [ ] Fetch lyrics from players' APIs (musicfox, yesplaymusic, etc.)
+- [x] NetEase Cloud Music lyric provider
+  - [ ] Different search patterns
+  - [ ] Cache online lyrics
+- [ ] Player API lyric provider
+  - [ ] Mpris2 asText
+  - [ ] YesPlayMusic
+  - [ ] MusicFox, etc.
 - [x] KDE Plasma plasmoid frontend
-- [ ] GNOME shell extension frontend
+- [ ] ~~GNOME shell extension frontend~~
+  There are also similar projects like desktop-lyrics and osdlyrics, so GNOME shell extension is not a priority.
 - [ ] README, etc.
 
 
