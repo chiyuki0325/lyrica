@@ -17,7 +17,7 @@ git checkout v0.2
 Debian/Ubuntu:
 
 ```bash
-sudo apt install rustup jq qt6-declarative-dev qt6-websockets-dev qml6-module-qtwebsockets
+sudo apt install rustup jq qt6-declarative-dev qt6-websockets-dev qml6-module-qtwebsockets libdbus-1-dev
 rustup toolchain install stable
 ``` 
 
@@ -31,14 +31,14 @@ rustup toolchain install stable
 Fedora:
 
 ```bash
-sudo dnf install rustup jq qt6-qtdeclarative qt6-qtdeclarative-devel qt6-qtwebsockets qt6-qtwebsockets-devel
+sudo dnf install rustup jq qt6-qtdeclarative qt6-qtdeclarative-devel qt6-qtwebsockets qt6-qtwebsockets-devel dbus-devel
 rustup toolchain install stable
 ```
 
 openSUSE:
 
 ```bash
-sudo zypper install rustup jq qt6-declarative qt6-websockets qt6-websockets-imports 
+sudo zypper install rustup jq qt6-declarative qt6-websockets qt6-websockets-imports dbus-1-devel
 rustup toolchain install stable
 ````
 
