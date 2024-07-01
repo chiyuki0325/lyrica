@@ -4,3 +4,5 @@ plasma-desktop-lyrics-daemon
 build-**/
 target/
 **/*.kate-swp
+package/
+*.plasmoid

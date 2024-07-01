@@ -24,11 +24,26 @@ The project's name comes from the Touhou Project character Lyrica Prismriver.
   - [ ] Mpris2 asText
   - [ ] YesPlayMusic
   - [ ] MusicFox, etc.
-- [x] KDE Plasma plasmoid frontend
+- [x] KDE Plasma Plasmoid frontend
 - [ ] ~~GNOME shell extension frontend~~
   There are also similar projects like desktop-lyrics and osdlyrics, so GNOME shell extension is not a priority.
 - [ ] User documents
 
+
+### Usage
+
+#### KDE Plasma
+
+Build:
+```bash
+bash build_plasmoid.sh [architecture]
+```
+Or download the latest release from the [release page](https://github.com/chiyuki0325/lyrica/releases).
+
+Install:
+```bash
+kpackagetool6 -i lyrica-plasmoid-<arch>.plasmoid -t Plasma/Applet
+```
 
 The logo of this project comes from the "東方 Project リバイバルちほー" of the rhythm game "maimai でらっくす".
 Copyright belongs to the original author.

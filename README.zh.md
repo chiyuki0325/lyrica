@@ -29,6 +29,20 @@ Lyrica 是一个简洁轻量的 Linux 桌面歌词显示软件。
   由于已经有类似的项目，比如 desktop-lyrics 和 osdlyrics，GNOME Shell 拓展暂时不会优先考虑。
 - [ ] 文档
 
+### 使用方法
+
+#### KDE Plasma
+
+编译：
+```bash
+bash build_plasmoid.sh [architecture]
+```
+或者从 [发布页面](https://github.com/chiyuki0325/lyrica/releases) 下载最新版本。
+
+安装：
+```bash
+kpackagetool6 -i lyrica-plasmoid-<arch>.plasmoid -t Plasma/Applet
+```
 
 本项目的 Logo 来自于音乐游戏《舞萌 DX》中的東方 Project Revival 区域。  
 版权归原作者所有。
