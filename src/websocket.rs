@@ -1,4 +1,3 @@
-use std::arch::x86_64::_lzcnt_u32;
 use actix::{Actor, AsyncContext, ActorFuture, StreamHandler, Handler};
 use actix_web::{web, HttpRequest, HttpResponse, Error};
 use actix_web_actors::ws;
