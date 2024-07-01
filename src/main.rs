@@ -6,10 +6,10 @@ mod web_routes;
 mod player_stream;
 mod lyric_providers;
 
-use actix_web::{web, App, HttpServer, Responder};
+use actix_web::{web, App, HttpServer};
 use tokio::sync::broadcast;
 use tokio::task::LocalSet;
-use crate::config::{initialize_config, SharedConfig};
+use crate::config::{initialize_config};
 
 #[derive(Debug, Clone)]
 enum ChannelMessage {

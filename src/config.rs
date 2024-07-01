@@ -1,6 +1,5 @@
 use std::sync::{Arc, RwLock};
-use serde::{Serialize, Deserialize} ;
-use crate::config;
+use serde::{Serialize, Deserialize};
 
 // source: https://stackoverflow.com/questions/53866508
 macro_rules! pub_struct {

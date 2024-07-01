@@ -19,7 +19,7 @@ fn parse_single_line(line: String) -> Result<(u128, String), ()> {
 
         // 解析歌词
         let lyric_str = line_parts[1].trim().to_string();
-        let time = ((minute * 60000000) as u128 + (second * 1000000.0) as u128);
+        let time = (minute * 60000000) as u128 + (second * 1000000.0) as u128;
         return Ok((time, lyric_str));
     }
     Err(())

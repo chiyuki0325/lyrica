@@ -14,19 +14,20 @@ pub(crate) struct WebSocketPacket {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[allow(non_camel_case_types)]
 pub(crate) enum WebSocketPacketData {
     lyric_line(UpdateLyricLinePacket),
     music_info(UpdateMusicInfoPacket),
 }
 
 #[derive(Debug, Clone, Serialize)]
-struct UpdateLyricLinePacket {
+pub(crate) struct UpdateLyricLinePacket {
     lyric: String,
     time: u128,
 }
 
 #[derive(Debug, Clone, Serialize)]
-struct UpdateMusicInfoPacket {
+pub(crate) struct UpdateMusicInfoPacket {
     title: String,
     artist: String,
 }

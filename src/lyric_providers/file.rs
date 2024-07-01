@@ -59,7 +59,7 @@ impl FileLyricProvider {
     }
 
     fn read_lrc_file(path: &str) -> Result<String, String> {
-        let mut path = Path::new(path).with_extension("lrc");
+        let path = Path::new(path).with_extension("lrc");
         if !path.exists() {
             return Err("Lrc file not found".to_string());
         }

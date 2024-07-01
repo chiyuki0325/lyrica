@@ -1,5 +1,4 @@
 use mpris::Metadata;
-use ncm_api;
 use serde_json::{
     Value,
     from_str as from_json_str,

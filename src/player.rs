@@ -16,17 +16,17 @@ struct MprisInfo {
     player_running: bool,
 }
 
-type MprisCache = Arc<Mutex<MprisInfo>>;
+// type MprisCache = Arc<Mutex<MprisInfo>>;
 
 pub async fn mpris_loop(
     tx: broadcast::Sender<ChannelMessage>,
     config: SharedConfig,
 ) {
-    let mut cache = Arc::new(Mutex::new((MprisInfo {
+    let mut cache = Arc::new(Mutex::new(MprisInfo {
         url: String::new(),
         is_lyric: false,
         player_running: false,
-    })));
+    }));
 
     let mut player_stream = MyPlayerStream::new(500);
     while let Some(player) = player_stream.next().await {
@@ -107,7 +107,7 @@ pub async fn mpris_loop(
                                 // 这个 provider 可用
                                 if provider.is_available(&url) {
                                     // 这个 provider 可以处理这个 URL
-                                    let mut success = false;
+                                    let success;
                                     (lyric, success) = provider.get_lyric(&url, &metadata).await;
                                     if success {
                                         // 成功获取歌词
