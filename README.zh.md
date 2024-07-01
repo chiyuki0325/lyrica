@@ -12,6 +12,8 @@ Lyrica 是一个简洁轻量的 Linux 桌面歌词显示软件。
 
 项目的名字来源于东方 Project 的角色莉莉卡·普莉兹姆利巴。
 
+---
+
 ### 开发进度
 
 - [x] LRC 解析器
@@ -31,17 +33,9 @@ Lyrica 是一个简洁轻量的 Linux 桌面歌词显示软件。
 
 ### 使用方法
 
-#### KDE Plasma
+查看 [构建说明](/docs/BUILD.md) 来构建并安装 Lyrica。
 
-编译：
-```bash
-bash build_plasmoid.sh [architecture]
-```
-
-安装：
-```bash
-kpackagetool6 -i lyrica-plasmoid-<arch>.plasmoid -t Plasma/Applet
-```
+---
 
 本项目的 Logo 来自于音乐游戏《舞萌 DX》中的東方 Project Revival 区域。  
 版权归原作者所有。

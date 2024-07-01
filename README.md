@@ -12,6 +12,8 @@ Currently the project is in development, but the current version is already usab
 
 The project's name comes from the Touhou Project character Lyrica Prismriver.
 
+---
+
 ### Project status
 
 - [x] LRC parser
@@ -32,17 +34,9 @@ The project's name comes from the Touhou Project character Lyrica Prismriver.
 
 ### Usage
 
-#### KDE Plasma
+Check the [build instructions](/docs/BUILD.md) to build and install Lyrica.
 
-Build:
-```bash
-bash build_plasmoid.sh [architecture]
-```
-
-Install:
-```bash
-kpackagetool6 -i lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
-```
+---
 
 The logo of this project comes from the "東方 Project リバイバルちほー" of the rhythm game "maimai でらっくす".
 Copyright belongs to the original author.
