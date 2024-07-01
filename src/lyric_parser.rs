@@ -50,7 +50,7 @@ pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
                         break;
                     } else if lyric_line.time < time {
                         // 是新的一句歌词
-                        lyrics.insert(idx, LyricLine {
+                        lyrics.push(LyricLine {
                             time,
                             lyric: lyric_str,
                             tlyric: None,
