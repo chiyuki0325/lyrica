@@ -42,7 +42,7 @@ Or download the latest release from the [release page](https://github.com/chiyuk
 
 Install:
 ```bash
-kpackagetool6 -i lyrica-plasmoid-<arch>.plasmoid -t Plasma/Applet
+kpackagetool6 -i lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
 ```
 
 The logo of this project comes from the "東方 Project リバイバルちほー" of the rhythm game "maimai でらっくす".
