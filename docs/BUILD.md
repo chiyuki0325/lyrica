@@ -55,6 +55,5 @@ kpackagetool6 -i lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
 
 #### Upgrade
 ```bash
-rm -rf ~/.local/share/plasma/plasmoids/ink.chyk.LyricaPlasmoid
-kpackagetool6 -i lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
+kpackagetool6 -u lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
 ```
