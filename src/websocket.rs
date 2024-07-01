@@ -1,4 +1,4 @@
-use actix::{Actor, AsyncContext, ActorFuture, StreamHandler, Handler};
+use actix::{Actor, AsyncContext, StreamHandler, Handler};
 use actix_web::{web, HttpRequest, HttpResponse, Error};
 use actix_web_actors::ws;
 use tokio::sync::broadcast;
@@ -43,6 +43,12 @@ impl Actor for LyricaSocket {
 
         let mut rx = self.rx.resubscribe();
         let ctx_address = ctx.address();
+
+
+        ctx_address.do_send(ChannelMessage::UpdateMusicInfo(
+            String::new(),
+            String::new(),
+        ));
 
         let fut = async move {
             while let Ok(msg) = rx.recv().await {
