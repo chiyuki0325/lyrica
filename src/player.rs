@@ -6,9 +6,7 @@ use crate::config::SharedConfig;
 use crate::player_stream::MyPlayerStream;
 use async_std::stream::StreamExt;
 use std::sync::{Arc, Mutex};
-use lyric_providers::LyricProvider;
 use crate::lyric_parser::{
-    parse_lyrics,
     LyricLine,
 };
 
@@ -37,8 +35,9 @@ pub async fn mpris_loop(
             println!("New player connected: {:?}", player.bus_name());
         }
         let player_name = String::from(player.bus_name());
-        let player_name = player_name.strip_prefix("org.mpris.MediaPlayer2.").unwrap();
-        if config.read().unwrap().disabled_players.contains(&player_name.to_string()) {
+        let player_name = player_name.strip_prefix("org.mpris.MediaPlayer2.").unwrap()
+            .split_once('.').unwrap().0.to_string();
+        if config.read().unwrap().disabled_players.contains(&player_name) {
             if config.read().unwrap().verbose {
                 println!("Player {} detected, but disabled in the config.", player_name);
             }
@@ -51,12 +50,15 @@ pub async fn mpris_loop(
         let mut last_time: u128 = 0;
         // 这个变量是循环上一次运行时的时间，用于判断进度条是否往左拉了
         let mut lyric: Vec<LyricLine> = Vec::new();
-        let tlyric_mode = config.read().unwrap().tlyric_mode;
+        let mut tlyric_mode;
 
         loop {
             // 主循环，此时 player 已被移动到此大括号中
             match player.get_metadata() {
                 Ok(metadata) => {
+                    // 更新设置
+                    tlyric_mode = config.read().unwrap().tlyric_mode;
+
                     // 判断歌曲是否更改
                     let url = metadata.url().unwrap_or(
                         metadata.art_url().unwrap_or_default()
@@ -106,7 +108,7 @@ pub async fn mpris_loop(
                         }
                     }
                 }
-                Err(e) => {
+                Err(_) => {
                     // 播放器已经关闭。
                     if config.read().unwrap().verbose {
                         println!("Player closed, exiting loop...");
