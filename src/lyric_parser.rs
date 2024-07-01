@@ -1,5 +1,6 @@
 use std::str::Lines;
 
+#[derive(Debug)]
 pub struct LyricLine {
     pub time: u128,
     pub lyric: String,
@@ -26,21 +27,28 @@ fn parse_single_line(line: String) -> Result<(u128, String), ()> {
     Err(())
 }
 
-pub(crate) fn parse_lyrics(lyric_lines: Lines) -> Vec<LyricLine> {
+pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
+    let lyric_lines = lyric_string.lines();
     let mut lyrics: Vec<LyricLine> = Vec::new();
 
     for line in lyric_lines {
         if let Ok((time, lyric_str)) = parse_single_line(String::from(line)) {
+            if lyrics.len() == 0 {
+                lyrics.push(LyricLine {
+                    time,
+                    lyric: lyric_str,
+                    tlyric: None,
+                });
+                continue;
+            }
             let mut idx = 0;
             while idx < lyrics.len() {
                 if let Some(lyric_line) = lyrics.get(idx) {
-                    if lyric_line.time < time {
-                        idx += 1;
-                    } else if lyric_line.time == time {
+                    if lyric_line.time == time {
                         // 这句歌词是该歌词的翻译
                         lyrics[idx].tlyric = Some(lyric_str);
                         break;
-                    } else {
+                    } else if lyric_line.time < time {
                         // 是新的一句歌词
                         lyrics.insert(idx, LyricLine {
                             time,
@@ -48,6 +56,8 @@ pub(crate) fn parse_lyrics(lyric_lines: Lines) -> Vec<LyricLine> {
                             tlyric: None,
                         });
                         break;
+                    } else {
+                        idx += 1;
                     }
                 }
             }
@@ -63,6 +73,6 @@ pub(crate) fn parse_netease_lyrics(
     tlyric_lines: Vec<String>,
 ) -> Vec<LyricLine> {
     parse_lyrics(
-        (lyric_lines.join("\n") + "\n" + &tlyric_lines.join("\n")).lines()
+        lyric_lines.join("\n") + "\n" + &tlyric_lines.join("\n")
     )
 }

@@ -81,16 +81,26 @@ pub async fn mpris_loop(
                         }
                         cache.url = url.to_string();
 
+
+                        let title = metadata.title().unwrap_or_default().to_string();
+                        let artist = metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string();
+                        // 这个 mpris 库可能抓不到歌手，需要额外做处理
                         tx.send(ChannelMessage::UpdateMusicInfo(
-                            metadata.title().unwrap_or_default().to_string(),
-                            metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string()
+                            title.clone(),
+                            artist,
                         )).unwrap();
+
+                        if title.is_empty() {
+                            // 没有歌曲名，不尝试获取歌词
+                            cache.is_lyric = false;
+                            continue;
+                        }
 
                         // 尝试获取歌词
                         lyric = Vec::new();
                         cache.is_lyric = false;
-                        for (name, provider) in lyric_providers::LYRIC_PROVIDERS.iter() {
-                            if config.read().unwrap().enabled_lyric_providers.contains(&(name.to_string())) {
+                        for name in config.read().unwrap().enabled_lyric_providers.iter() {
+                            if let Some(provider) = lyric_providers::LYRIC_PROVIDERS.get(name.as_str()) {
                                 if config.read().unwrap().verbose {
                                     println!("Trying provider: {}", name);
                                 }
