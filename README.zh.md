@@ -37,7 +37,6 @@ Lyrica 是一个简洁轻量的 Linux 桌面歌词显示软件。
 ```bash
 bash build_plasmoid.sh [architecture]
 ```
-或者从 [发布页面](https://github.com/chiyuki0325/lyrica/releases) 下载最新版本。
 
 安装：
 ```bash

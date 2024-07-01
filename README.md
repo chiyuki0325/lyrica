@@ -38,7 +38,6 @@ Build:
 ```bash
 bash build_plasmoid.sh [architecture]
 ```
-Or download the latest release from the [release page](https://github.com/chiyuki0325/lyrica/releases).
 
 Install:
 ```bash
