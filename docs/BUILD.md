@@ -4,6 +4,14 @@
 
 Lyrica only works with Plasma version 6.0 or later.
 
+#### Fetch source code
+
+```bash
+git clone https://github.com/chiyuki0325/lyrica
+cd lyrica
+git checkout v0.2
+```
+
 #### Install dependencies
 
 Debian/Ubuntu:
@@ -37,10 +45,16 @@ rustup toolchain install stable
 #### Build
 
 ```bash
-bash build_plasmoid.sh [architecture]
+bash build_plasmoid.sh
 ```
 
 #### Install
 ```bash
+kpackagetool6 -i lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
+```
+
+#### Upgrade
+```bash
+rm -rf ~/.local/share/plasma/plasmoids/ink.chyk.LyricaPlasmoid
 kpackagetool6 -i lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
 ```
