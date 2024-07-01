@@ -74,7 +74,7 @@ pub async fn mpris_loop(
 
                         tx.send(ChannelMessage::UpdateMusicInfo(
                             metadata.title().unwrap_or_default().to_string(),
-                            metadata.artists().unwrap_or_default()[0].to_string(),
+                            metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string()
                         )).unwrap();
 
                         // 尝试获取歌词
