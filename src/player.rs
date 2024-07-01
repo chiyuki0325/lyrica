@@ -158,7 +158,7 @@ pub async fn mpris_loop(
                         let line_lyric = if line.tlyric.is_some() {
                             // 有翻译
                             let tlyric_clone = line.tlyric.clone().unwrap();
-                            if tlyric_clone.is_empty() {
+                            if tlyric_clone.is_empty() || tlyric_clone == line.lyric {
                                 line.lyric.clone()
                             } else {
                                 match tlyric_mode {

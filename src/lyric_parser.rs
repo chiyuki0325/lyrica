@@ -32,15 +32,18 @@ pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
     for line in lyric_lines {
         if let Ok((time, lyric_str)) = parse_single_line(String::from(line)) {
 
+            // println!("line {}: {}", time, lyric_str);
             let mut idx = 0;
             loop {
                 if let Some(lyric_line) = lyrics.get(idx) {
                     if lyric_line.time == time {
                         // 这句歌词是该歌词的翻译
+                        // println!("TLYRIC {}: {}", time, lyric_str);
                         lyrics[idx].tlyric = Some(lyric_str);
                         break;
                     } else if time < lyric_line.time {
                         // 是新的一句歌词
+                        // println!("APPEND {}: {}", time, lyric_str);
                         lyrics.push(LyricLine {
                             time,
                             lyric: lyric_str,
@@ -48,14 +51,17 @@ pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
                         });
                         break;
                     } else {
+                        // println!("SKIPPING {}: {}", lyric_line.time, lyric_line.lyric);
                         idx += 1;
                     }
                 } else {
+                    // println!("APPEND {}: {}", time, lyric_str);
                     lyrics.push(LyricLine {
                         time,
                         lyric: lyric_str.clone(),
                         tlyric: None,
                     });
+                    break;
                 }
             }
         }
