@@ -12,6 +12,7 @@ cargo build --release --target "${arch}-unknown-linux-gnu"
 
 mkdir package
 cp -r plasmoid/* package/
+mkdir -p package/contents/bin/
 cp "target/${arch}-unknown-linux-gnu/release/lyrica" package/contents/bin/
 7z a -tzip "lyrica-plasmoid-v${version}-${arch}.plasmoid" package/*
 rm -rf package
