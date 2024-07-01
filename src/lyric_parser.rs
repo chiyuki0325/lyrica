@@ -1,5 +1,3 @@
-use std::str::Lines;
-
 #[derive(Debug)]
 pub struct LyricLine {
     pub time: u128,
@@ -33,22 +31,15 @@ pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
 
     for line in lyric_lines {
         if let Ok((time, lyric_str)) = parse_single_line(String::from(line)) {
-            if lyrics.len() == 0 {
-                lyrics.push(LyricLine {
-                    time,
-                    lyric: lyric_str,
-                    tlyric: None,
-                });
-                continue;
-            }
+
             let mut idx = 0;
-            while idx < lyrics.len() {
+            loop {
                 if let Some(lyric_line) = lyrics.get(idx) {
                     if lyric_line.time == time {
                         // 这句歌词是该歌词的翻译
                         lyrics[idx].tlyric = Some(lyric_str);
                         break;
-                    } else if lyric_line.time < time {
+                    } else if time < lyric_line.time {
                         // 是新的一句歌词
                         lyrics.push(LyricLine {
                             time,
@@ -59,6 +50,12 @@ pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
                     } else {
                         idx += 1;
                     }
+                } else {
+                    lyrics.push(LyricLine {
+                        time,
+                        lyric: lyric_str.clone(),
+                        tlyric: None,
+                    });
                 }
             }
         }

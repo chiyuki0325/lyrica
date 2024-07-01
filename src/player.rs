@@ -123,6 +123,7 @@ pub async fn mpris_loop(
                                 }
                             }
                         }
+                        // println!("{:?} {:?}", lyric, cache.is_lyric);
                     }
                 }
                 Err(_) => {
@@ -155,13 +156,20 @@ pub async fn mpris_loop(
                     if current_time >= line.time {
                         // 歌词变化
                         let line_lyric = if line.tlyric.is_some() {
-                            match tlyric_mode {
-                                1 => line.tlyric.clone().unwrap(),
-                                2 => format!("{} | {}", line.lyric, line.tlyric.clone().unwrap()),
-                                3 => format!("{} | {}", line.tlyric.clone().unwrap(), line.lyric),
-                                _ => line.lyric.clone(),
+                            // 有翻译
+                            let tlyric_clone = line.tlyric.clone().unwrap();
+                            if tlyric_clone.is_empty() {
+                                line.lyric.clone()
+                            } else {
+                                match tlyric_mode {
+                                    1 => tlyric_clone,
+                                    2 => format!("{} | {}", line.lyric, tlyric_clone),
+                                    3 => format!("{} | {}", tlyric_clone, line.lyric),
+                                    _ => line.lyric.clone(),  // 0
+                                }
                             }
                         } else {
+                            // 没有翻译
                             line.lyric.clone()
                         };
 
