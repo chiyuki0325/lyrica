@@ -13,6 +13,11 @@ Kirigami.FormLayout {
     property alias disabledFolders: disabledFolders.text
 
     Label {
+        text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.\n')
+        font.bold: true
+    }
+
+    Label {
         text: i18n('Lyric translation mode:')
     }
 
