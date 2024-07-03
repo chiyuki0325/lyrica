@@ -1,11 +1,11 @@
 use url::Url;
 use std::path::Path;
-use id3::Tag;
-use flac::metadata;
+use id3::Tag as ID3Tag;
 use crate::lyric_parser::{
     LyricLine,
-    parse_lyrics
+    parse_lyrics,
 };
+use metaflac::Tag as FLACTag;
 
 #[derive(Clone)]
 pub struct FileLyricProvider {}
@@ -84,7 +84,7 @@ impl FileLyricProvider {
     }
 
     fn read_id3_tag_lyric(path: &str) -> Result<String, String> {
-        let tag = Tag::read_from_path(path).map_err(|e| format!("Failed to read tag: {}", e))?;
+        let tag = ID3Tag::read_from_path(path).map_err(|e| format!("Failed to read tag: {}", e))?;
         for lyric_tag in tag.lyrics() {
             return Ok(lyric_tag.text.clone());
         }
@@ -92,13 +92,14 @@ impl FileLyricProvider {
     }
 
     fn read_flac_tag_lyric(path: &str) -> Result<String, String> {
-        if let Ok(vorbis_comment) = metadata::get_vorbis_comment(path) {
-            for comment in vorbis_comment.comments {
-                if comment.0.to_uppercase() == "LYRICS" {
-                    return Ok(comment.1.clone());
-                }
+        if let Ok(tag) = FLACTag::read_from_path(path) {
+            if let Some(lyric_tags) = tag.get_vorbis("LYRICS") {
+                Ok(lyric_tags.collect::<Vec<_>>().join("\n"))
+            } else {
+                Err("Lyrics tag not found".to_string())
             }
+        } else {
+            Err("FLAC tag not found".to_string())
         }
-        Err("FLAC tag not found".to_string())
     }
 }

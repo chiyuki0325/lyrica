@@ -14,9 +14,10 @@ mpris = "2.0.1"
 mpris-async = "0.1.0"
 async-std = "1.12.0"
 url = "2.5.2"
-flac = "0.5.0"
+#flac = "0.5.0"
 id3 = "1.14.0"
 # async-trait = "0.1.80"
 # ncm-api = { git = "https://github.com/gmg137/netease-cloud-music-api.git", branch = "dev", package = "netease-cloud-music-api" }
 ncm-api = { git = "https://github.com/gmg137/netease-cloud-music-api.git", tag = "1.4.0", package = "netease-cloud-music-api" }
 lazy_static = "1.5.0"
+metaflac = "0.2.7"
