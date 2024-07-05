@@ -9,7 +9,7 @@ Lyrica only works with Plasma version 6.0 or later.
 ```bash
 git clone https://github.com/chiyuki0325/lyrica
 cd lyrica
-git checkout v0.3
+git checkout v0.4
 ```
 
 #### Install dependencies
@@ -19,7 +19,7 @@ Debian/Ubuntu:
 ```bash
 sudo apt install rustup jq qt6-declarative-dev qt6-websockets-dev qml6-module-qtwebsockets libdbus-1-dev
 rustup toolchain install stable
-``` 
+```
 
 Arch Linux:
 
