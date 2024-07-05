@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 pub mod file;
 pub mod netease;
 pub mod mpris2_text;
+pub mod yesplaymusic;
 
 use crate::lyric_parser::LyricLine;
 
@@ -12,6 +13,7 @@ pub enum LyricProvider {
     File(file::FileLyricProvider),
     Netease(netease::NeteaseLyricProvider),
     Mpris2Text(mpris2_text::Mpris2TextProvider),
+    YesPlayMusic(yesplaymusic::YesPlayMusicLyricProvider),
 }
 
 impl LyricProvider {
@@ -20,6 +22,8 @@ impl LyricProvider {
             LyricProvider::File(provider) => provider.get_lyric(music_url).await,
             LyricProvider::Netease(provider) => provider.get_lyric_by_metadata(metadata).await,
             LyricProvider::Mpris2Text(provider) => provider.get_lyric_by_metadata(metadata).await,
+            LyricProvider::YesPlayMusic(provider) => provider.get_lyric(music_url).await,
+
         }
     }
 
@@ -28,6 +32,7 @@ impl LyricProvider {
             LyricProvider::File(provider) => provider.is_available(music_url),
             LyricProvider::Netease(_) => true,
             LyricProvider::Mpris2Text(provider) => provider.is_available_by_metadata(metadata),
+            LyricProvider::YesPlayMusic(provider) => provider.      is_available(music_url, metadata),
         }
     }
 }
@@ -38,6 +43,7 @@ lazy_static! {
         let mut m = HashMap::new();
         m.insert("mpris2_text", LyricProvider::Mpris2Text(mpris2_text::Mpris2TextProvider {}));
         m.insert("file", LyricProvider::File(file::FileLyricProvider {}));
+        m.insert("yesplaymusic", LyricProvider::YesPlayMusic(yesplaymusic::YesPlayMusicLyricProvider::new()));
         m.insert("netease", LyricProvider::Netease(netease::NeteaseLyricProvider {}));
         m
     };

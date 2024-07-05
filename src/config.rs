@@ -37,9 +37,10 @@ pub fn initialize_config() -> SharedConfig {
             "kdeconnect".to_string()
         ],
         enabled_lyric_providers: vec![
+            "mpris2_text".to_string(),
             "file".to_string(),
+            "yesplaymusic".to_string(),
             "netease".to_string(),
-            "yesplaymusic".to_string()
         ],
         disabled_folders: vec![],
     };

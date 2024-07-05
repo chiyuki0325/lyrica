@@ -24,7 +24,7 @@ The project's name comes from the Touhou Project character Lyrica Prismriver.
   - [ ] Cache online lyrics
 - [x] Player API lyric provider
   - [x] Mpris2 asText
-  - [ ] YesPlayMusic
+  - [x] YesPlayMusic
 - [x] KDE Plasma Plasmoid frontend
 - [ ] ~~GNOME shell extension frontend~~
   There are also similar projects like desktop-lyrics and osdlyrics, so GNOME shell extension is not a priority.

@@ -4,11 +4,11 @@ version = "0.3.0"
 edition = "2021"
 
 [dependencies]
-tokio = {version = "1.38.0", features = ["full"]}
+tokio = { version = "1.38.0", features = ["full"] }
 actix = "0.13.5"
 actix-web = "4.8.0"
 actix-web-actors = "4.3.0"
-serde =  {version = "1.0.203", features = ["derive"]}
+serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.119"
 mpris = "2.0.1"
 mpris-async = "0.1.0"
@@ -21,3 +21,4 @@ id3 = "1.14.0"
 ncm-api = { git = "https://github.com/gmg137/netease-cloud-music-api.git", tag = "1.4.0", package = "netease-cloud-music-api" }
 lazy_static = "1.5.0"
 metaflac = "0.2.7"
+isahc = { version = "1.7.2", features = ["json"] }
