@@ -13,7 +13,11 @@ Kirigami.FormLayout {
     property alias disabledFolders: disabledFolders.text
 
     Label {
-        text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.\n')
+        text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.\n\n')
+        font.bold: true
+    }
+    Label {
+        text: i18n('After saving settings, right-click the widget then select "Reload" to make the changes take effect.\n')
         font.bold: true
     }
 
