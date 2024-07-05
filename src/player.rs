@@ -105,7 +105,7 @@ pub async fn mpris_loop(
                                     println!("Trying provider: {}", name);
                                 }
                                 // 这个 provider 可用
-                                if provider.is_available(&url) {
+                                if provider.is_available(&url, &metadata) {
                                     // 这个 provider 可以处理这个 URL
                                     let success;
                                     (lyric, success) = provider.get_lyric(&url, &metadata).await;
