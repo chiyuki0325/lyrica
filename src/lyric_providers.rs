@@ -6,6 +6,7 @@ pub mod file;
 pub mod netease;
 pub mod mpris2_text;
 pub mod yesplaymusic;
+pub mod feeluown_netease;
 
 use crate::lyric_parser::LyricLine;
 
@@ -14,6 +15,7 @@ pub enum LyricProvider {
     Netease(netease::NeteaseLyricProvider),
     Mpris2Text(mpris2_text::Mpris2TextProvider),
     YesPlayMusic(yesplaymusic::YesPlayMusicLyricProvider),
+    FeelUOwnNetease(feeluown_netease::FeelUOwnNeteaseLyricProvider),
 }
 
 impl LyricProvider {
@@ -23,7 +25,7 @@ impl LyricProvider {
             LyricProvider::Netease(provider) => provider.get_lyric_by_metadata(metadata).await,
             LyricProvider::Mpris2Text(provider) => provider.get_lyric_by_metadata(metadata).await,
             LyricProvider::YesPlayMusic(provider) => provider.get_lyric(music_url).await,
-
+            LyricProvider::FeelUOwnNetease(provider) => provider.get_lyric(music_url).await,
         }
     }
 
@@ -32,7 +34,8 @@ impl LyricProvider {
             LyricProvider::File(provider) => provider.is_available(music_url),
             LyricProvider::Netease(_) => true,
             LyricProvider::Mpris2Text(provider) => provider.is_available_by_metadata(metadata),
-            LyricProvider::YesPlayMusic(provider) => provider.      is_available(music_url, metadata),
+            LyricProvider::YesPlayMusic(provider) => provider.  is_available(music_url, metadata),
+            LyricProvider::FeelUOwnNetease(provider) => provider.is_available(music_url),
         }
     }
 }
@@ -44,6 +47,7 @@ lazy_static! {
         m.insert("mpris2_text", LyricProvider::Mpris2Text(mpris2_text::Mpris2TextProvider {}));
         m.insert("file", LyricProvider::File(file::FileLyricProvider {}));
         m.insert("yesplaymusic", LyricProvider::YesPlayMusic(yesplaymusic::YesPlayMusicLyricProvider::new()));
+        m.insert("feeluown_netease", LyricProvider::FeelUOwnNetease(feeluown_netease::FeelUOwnNeteaseLyricProvider {}));
         m.insert("netease", LyricProvider::Netease(netease::NeteaseLyricProvider {}));
         m
     };

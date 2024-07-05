@@ -73,11 +73,12 @@ Kirigami.FormLayout {
     TextField {
         id: enabledLyricProviders
         Kirigami.FormData.label: i18n("Enabled lyric providers (comma separated):")
-        placeholderText: i18n("mpris2_text,file,yesplaymusic,netease")
+        placeholderText: i18n("mpris2_text,file,yesplaymusic,feeluown_netease,netease")
     }
 
     Label {
-        text: i18n('(Available providers: mpris2_text, file, yesplaymusic, netease)')
+        text: i18n('(<html>For available providers, see the project's <a href="https://github.com/chiyuki0325/lyrica/blob/next/docs/LYRIC_PROVIDERS.md">GitHub page.</a></html>)')
+        onLinkActivated: Qt.openUrlExternally(link)
     }
 
     TextArea {
