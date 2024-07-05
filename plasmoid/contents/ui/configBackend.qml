@@ -73,11 +73,11 @@ Kirigami.FormLayout {
     TextField {
         id: enabledLyricProviders
         Kirigami.FormData.label: i18n("Enabled lyric providers (comma separated):")
-        placeholderText: i18n("file,netease,yesplaymusic")
+        placeholderText: i18n("mpris2_text,file,yesplaymusic,netease")
     }
 
     Label {
-        text: i18n('(Available providers: file, netease, yesplaymusic)')
+        text: i18n('(Available providers: mpris2_text, file, yesplaymusic, netease)')
     }
 
     TextArea {
