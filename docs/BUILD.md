@@ -50,10 +50,10 @@ bash build_plasmoid.sh
 
 #### Install
 ```bash
-kpackagetool6 -i lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
+kpackagetool6 -i lyrica-plasmoid-<version>-<distro>-<arch>.plasmoid -t Plasma/Applet
 ```
 
 #### Upgrade
 ```bash
-kpackagetool6 -u lyrica-plasmoid-<version>-<arch>.plasmoid -t Plasma/Applet
+kpackagetool6 -u lyrica-plasmoid-<version>-<distro>-<arch>.plasmoid -t Plasma/Applet
 ```
