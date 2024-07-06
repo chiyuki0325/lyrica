@@ -14,13 +14,17 @@ Lyrica 使用以下歌词源来获取播放器的歌词。
 
 支持的文件格式：mp3、flac、lrc。
 
-## `feeluown_netease`
-
-FeelUOwn 是一个用 Python 编写的本地 / 在线音乐播放器。当使用 FeelUOwn 的网易源听歌时，可以使用此歌词源。
-
 ## `yesplaymusic`
 
 YesPlayMusic 是网易云音乐的第三方播放器。当使用此播放器时，Lyrica 可以从 YesPlayMusic 提供的 API 获取歌词。
+
+## `netease_gtk4`
+
+NetEase Cloud Music GTK4 是另一个流行的网易云音乐第三方播放器。当使用 NetEase Cloud Music GTK4 时，可以使用此歌词源。
+
+## `feeluown_netease`
+
+FeelUOwn 是一个用 Python 编写的本地 / 在线音乐播放器。当使用 FeelUOwn 的网易源听歌时，可以使用此歌词源。
 
 ## `netease`
 

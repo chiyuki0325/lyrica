@@ -40,6 +40,7 @@ pub fn initialize_config() -> SharedConfig {
             "mpris2_text".to_string(),
             "file".to_string(),
             "yesplaymusic".to_string(),
+            "netease_gtk4".to_string(),
             "feeluown_netease".to_string(),
             "netease".to_string(),
         ],
