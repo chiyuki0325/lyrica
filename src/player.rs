@@ -67,9 +67,16 @@ pub async fn mpris_loop(
                     tlyric_mode = config.read().unwrap().tlyric_mode;
 
                     // 判断歌曲是否更改
-                    let url = metadata.url().unwrap_or(
-                        metadata.art_url().unwrap_or_default()
-                    );
+
+                    let url = if let Some(_url) = metadata.url() {
+                        _url.to_string()
+                    } else {
+                        if let Some(_track_id) = metadata.track_id() {
+                            _track_id.to_string()
+                        } else {
+                            metadata.art_url().unwrap_or_default().to_string()
+                        }
+                    };
 
                     let mut cache = cache.lock().unwrap();
 
@@ -79,7 +86,7 @@ pub async fn mpris_loop(
                         if config.read().unwrap().verbose {
                             println!("New song detected: {}", url);
                         }
-                        cache.url = url.to_string();
+                        cache.url = url.clone();
 
 
                         let title = metadata.title().unwrap_or_default().to_string();
