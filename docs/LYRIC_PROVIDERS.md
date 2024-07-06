@@ -1,5 +1,7 @@
 # Lyric Providers
 
+[简体中文](LYRIC_PROVIDERS.zh.md)
+
 The lyric providers below are used to fetch lyrics from players.
 
 You can disable unnecessary lyric providers in the settings of the Lyrica widget.
