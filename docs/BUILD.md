@@ -9,7 +9,7 @@ Lyrica only works with Plasma version 6.0 or later.
 ```bash
 git clone https://github.com/chiyuki0325/lyrica
 cd lyrica
-git checkout v0.5
+git checkout $(git tag --list "v*" | tail -1)
 ```
 
 #### Install dependencies
