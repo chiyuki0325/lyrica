@@ -13,11 +13,11 @@ Kirigami.FormLayout {
     property alias disabledFolders: disabledFolders.text
 
     Label {
-        text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.\n\n')
+        text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.')
         font.bold: true
     }
     Label {
-        text: i18n('After saving settings, right-click the widget then select "Reload" to make the changes take effect.\n')
+        text: i18n('After saving settings, right-click the widget\nthen select "Reload" to make the changes take effect.\n')
         font.bold: true
     }
 
@@ -77,7 +77,7 @@ Kirigami.FormLayout {
     }
 
     Label {
-        text: i18n('(<html>For available providers, see the project's <a href="https://github.com/chiyuki0325/lyrica/blob/next/docs/LYRIC_PROVIDERS.md">GitHub page.</a></html>)')
+        text: i18n('(<html>For available providers, see the project\'s <a href="https://github.com/chiyuki0325/lyrica/blob/next/docs/LYRIC_PROVIDERS.md">GitHub page.</a></html>)')
         onLinkActivated: Qt.openUrlExternally(link)
     }
 
