@@ -17,13 +17,13 @@ impl NeteaseLyricProvider {
     pub async fn get_lyric_by_metadata(
         &self,
         metadata: &Metadata,
-        online_search_pattern: u8
+        online_search_pattern: u8,
     ) -> (Vec<LyricLine>, bool) {
         let ncm_api = ncm_api::MusicApi::new(0);
         let title = metadata.title().unwrap_or_default().to_string();
         let artist = metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string();
         let search_result = ncm_api.search(
-            match online_search_pattern{
+            match online_search_pattern {
                 0 => title + " " + &artist,
                 1 => title,
                 _ => String::new(),
@@ -48,6 +48,13 @@ impl NeteaseLyricProvider {
                             let lyric_result = ncm_api.song_lyric(song["id"].as_u64().unwrap()).await;
                             if let Ok(lyric_result) = lyric_result {
                                 let lyric_lines = lyric_result.lyric;
+                                if (lyric_lines.is_empty()) || (
+                                    lyric_lines.len() == 1 && lyric_lines[0].ends_with("纯音乐，请欣赏")
+                                    // 纯音乐
+                                ) {
+                                    // 没有歌词
+                                    return (Vec::new(), false);
+                                }
                                 let tlyric_lines = lyric_result.tlyric;
                                 return (
                                     parse_netease_lyrics(lyric_lines, tlyric_lines),
