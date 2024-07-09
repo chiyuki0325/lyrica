@@ -38,7 +38,7 @@
             <default>firefox,chromium,plasma-browser-integration,kdeconnect</default>
         </entry>
         <entry name="enabledLyricProviders" type="String">
-            <default>mpris2_text,file,yesplaymusic,netease_gtk4,feeluown_netease,netease</default>
+            <default>mpris2_text,file,yesplaymusic,netease_trackid,feeluown_netease,netease</default>
         </entry>
         <entry name="disabledFolders" type="String">
             <default/>

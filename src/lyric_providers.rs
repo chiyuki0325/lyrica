@@ -7,7 +7,7 @@ pub mod netease;
 pub mod mpris2_text;
 pub mod yesplaymusic;
 pub mod feeluown_netease;
-pub mod netease_gtk4;
+pub mod netease_trackid;
 
 use crate::lyric_parser::LyricLine;
 
@@ -17,7 +17,7 @@ pub enum LyricProvider {
     Mpris2Text(mpris2_text::Mpris2TextProvider),
     YesPlayMusic(yesplaymusic::YesPlayMusicLyricProvider),
     FeelUOwnNetease(feeluown_netease::FeelUOwnNeteaseLyricProvider),
-    NeteaseGtk4(netease_gtk4::NeteaseGtk4LyricProvider),
+    NeteaseTrackID(netease_trackid::NeteaseTrackIDLyricProvider),
 }
 
 impl LyricProvider {
@@ -28,7 +28,7 @@ impl LyricProvider {
             LyricProvider::Mpris2Text(provider) => provider.get_lyric_by_metadata(metadata).await,
             LyricProvider::YesPlayMusic(provider) => provider.get_lyric(music_url).await,
             LyricProvider::FeelUOwnNetease(provider) => provider.get_lyric(music_url).await,
-            LyricProvider::NeteaseGtk4(provider) => provider.get_lyric_by_metadata(metadata).await,
+            LyricProvider::NeteaseTrackID(provider) => provider.get_lyric_by_metadata(metadata).await,
         }
     }
 
@@ -39,7 +39,7 @@ impl LyricProvider {
             LyricProvider::Mpris2Text(provider) => provider.is_available_by_metadata(metadata),
             LyricProvider::YesPlayMusic(provider) => provider.  is_available(music_url, metadata),
             LyricProvider::FeelUOwnNetease(provider) => provider.is_available(music_url),
-            LyricProvider::NeteaseGtk4(provider) => provider.is_available_by_metadata(metadata),
+            LyricProvider::NeteaseTrackID(provider) => provider.is_available_by_metadata(metadata),
         }
     }
 }
@@ -53,7 +53,7 @@ lazy_static! {
         m.insert("yesplaymusic", LyricProvider::YesPlayMusic(yesplaymusic::YesPlayMusicLyricProvider::new()));
         m.insert("feeluown_netease", LyricProvider::FeelUOwnNetease(feeluown_netease::FeelUOwnNeteaseLyricProvider {}));
         m.insert("netease", LyricProvider::Netease(netease::NeteaseLyricProvider {}));
-        m.insert("netease_gtk4", LyricProvider::NeteaseGtk4(netease_gtk4::NeteaseGtk4LyricProvider {}));
+        m.insert("netease_trackid", LyricProvider::NeteaseTrackID(netease_trackid::NeteaseTrackIDLyricProvider {}));
         m
     };
 }
