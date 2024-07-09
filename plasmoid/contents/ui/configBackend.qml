@@ -90,7 +90,7 @@ Kirigami.FormLayout {
         textRole: 'label'
         model: [
             {
-                'label': i18n('Title + Artist')
+                'label': i18n('Title + Artist'),
                 'value': 0
             },
             {
