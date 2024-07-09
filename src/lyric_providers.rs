@@ -21,10 +21,15 @@ pub enum LyricProvider {
 }
 
 impl LyricProvider {
-    pub async fn get_lyric(&self, music_url: &str, metadata: &Metadata) -> (Vec<LyricLine>, bool) {
+    pub async fn get_lyric(
+        &self,
+        music_url: &str,
+        metadata: &Metadata,
+        online_search_pattern: u8
+    ) -> (Vec<LyricLine>, bool) {
         match self {
             LyricProvider::File(provider) => provider.get_lyric(music_url).await,
-            LyricProvider::Netease(provider) => provider.get_lyric_by_metadata(metadata).await,
+            LyricProvider::Netease(provider) => provider.get_lyric_by_metadata(metadata, online_search_pattern).await,
             LyricProvider::Mpris2Text(provider) => provider.get_lyric_by_metadata(metadata).await,
             LyricProvider::YesPlayMusic(provider) => provider.get_lyric(music_url).await,
             LyricProvider::FeelUOwnNetease(provider) => provider.get_lyric(music_url).await,

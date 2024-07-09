@@ -43,5 +43,10 @@
         <entry name="disabledFolders" type="String">
             <default/>
         </entry>
+        <entry name="onlineSearchPattern" type="Int">
+            <default>0</default>
+            <!-- 0: Title + Artist -->
+            <!-- 1: Title only -->
+        </entry>
     </group>
 </kcfg>

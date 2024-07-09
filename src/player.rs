@@ -115,7 +115,11 @@ pub async fn mpris_loop(
                                 if provider.is_available(&url, &metadata) {
                                     // 这个 provider 可以处理这个 URL
                                     let success;
-                                    (lyric, success) = provider.get_lyric(&url, &metadata).await;
+                                    (lyric, success) = provider.get_lyric(
+                                        &url,
+                                        &metadata,
+                                        config.read().unwrap().online_search_pattern
+                                    ).await;
                                     if success {
                                         // 成功获取歌词
                                         if config.read().unwrap().verbose {

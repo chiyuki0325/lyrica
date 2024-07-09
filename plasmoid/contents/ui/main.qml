@@ -77,6 +77,7 @@ PlasmoidItem {
                         tlyric_mode: plasmoid.configuration.tlyricMode,
                         disabled_players: plasmoid.configuration.disabledPlayers.split(","),
                         enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(","),
+                        online_search_pattern: plasmoid.configuration.onlineSearchPattern,
                         disabled_folders: plasmoid.configuration.disabledFolders.split("\n")
                     }))
                 }

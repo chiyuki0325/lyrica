@@ -81,11 +81,40 @@ Kirigami.FormLayout {
         onLinkActivated: Qt.openUrlExternally(link)
     }
 
-    TextArea {
-        id: disabledFolders
-        Kirigami.FormData.label: i18n("Disabled folders (one per line):")
-        placeholderText: i18n("/home/user/Music/lyric\n/home/user/Music/lyric2")
+    Label {
+        text: i18n('Online lyric search pattern:')
     }
 
+    ComboBox {
+        id: onlineSearchPattern
+        textRole: 'label'
+        model: [
+            {
+                'label': i18n('Title + Artist')
+                'value': 0
+            },
+            {
+                'label': i18n('Title only (may not accurate)'),
+                'value': 1
+            }
+        ]
+        onCurrentIndexChanged: cfg_onlineSearchPattern = model[currentIndex]['value']
+
+        Component.onCompleted: {
+            for (var i = 0; i < model.length; i++) {
+                if (model[i]['value'] == plasmoid.configuration.onlineSearchPattern) {
+                    onlineSearchPattern.currentIndex = i
+                }
+            }
+        }
+
+        property string currentVal: model[currentIndex]['value']
+    }
+
+    TextArea {
+        id: disabledFolders
+        Kirigami.FormData.label: i18n("Disabled folders (one per line):\nMusics in these folders will be treated as instrumental and won't be searched for lyrics.")
+        placeholderText: i18n("/home/user/Music/lyric\n/home/user/Music/lyric2")
+    }
 
 }

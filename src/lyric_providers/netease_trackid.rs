@@ -26,6 +26,6 @@ impl NeteaseTrackIDLyricProvider {
     }
 
     pub fn is_available_by_metadata(&self, metadata: &Metadata) -> bool {
-        metadata.track_id().is_some() && metadata.track_id().unwrap().as_str().rsplit("/").next().unwrap().parse::<u64>().is_ok()
+        metadata.track_id().is_some() && metadata.track_id().unwrap().as_str().rsplit(  "/").next().unwrap().parse::<u64>().is_ok()
     }
 }

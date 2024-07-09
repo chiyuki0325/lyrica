@@ -14,10 +14,20 @@ pub struct NeteaseLyricProvider {}
 
 
 impl NeteaseLyricProvider {
-    pub async fn get_lyric_by_metadata(&self, metadata: &Metadata) -> (Vec<LyricLine>, bool) {
+    pub async fn get_lyric_by_metadata(
+        &self,
+        metadata: &Metadata,
+        online_search_pattern: u8
+    ) -> (Vec<LyricLine>, bool) {
         let ncm_api = ncm_api::MusicApi::new(0);
+        let title = metadata.title().unwrap_or_default().to_string();
+        let artist = metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string();
         let search_result = ncm_api.search(
-            String::from(metadata.title().unwrap_or_default()),
+            match online_search_pattern{
+                0 => title + " " + &artist,
+                1 => title,
+                _ => String::new(),
+            },
             1, // 单曲
             0,
             5,
@@ -29,6 +39,7 @@ impl NeteaseLyricProvider {
                 if let Some(name) = song.get("name") {
                     if name.as_str().unwrap_or_default().to_ascii_lowercase().starts_with(
                         metadata.title().unwrap_or_default().to_ascii_lowercase().as_str()
+                        // 此比较方法可以使带（翻唱版）等后缀的歌曲也匹配成功
                     ) {
                         let searched_length = Duration::from_millis(song["duration"].as_u64().unwrap());
                         let music_length = metadata.length().unwrap_or_default();

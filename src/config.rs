@@ -16,6 +16,7 @@ pub_struct!(Config {
     tlyric_mode: u8,
     disabled_players: Vec<String>,
     enabled_lyric_providers: Vec<String>,
+    online_search_pattern: u8,
     disabled_folders: Vec<String>,
 });
 
@@ -44,6 +45,9 @@ pub fn initialize_config() -> SharedConfig {
             "feeluown_netease".to_string(),
             "netease".to_string(),
         ],
+        online_search_pattern: 0,
+        // 0: Title + Artist
+        // 1: Title only
         disabled_folders: vec![],
     };
     Arc::new(RwLock::new(config))
