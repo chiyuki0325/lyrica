@@ -69,6 +69,14 @@ PlasmoidItem {
                     })
                 } else if (status == WebSocket.Open) {
                     // Send config
+                    var providerMap = {
+                        "mpris2_text": 0,
+                        "file": 1,
+                        "yesplaymusic": 2,
+                        "netease_trackid": 3,
+                        "feeluown_netease": 4,
+                        "netease": 5
+                    }
                     var xhr = new XMLHttpRequest()
                     xhr.open("POST", "http://127.0.0.1:15649/config/update", true)
                     xhr.setRequestHeader("Content-Type", "application/json")
@@ -76,7 +84,9 @@ PlasmoidItem {
                         verbose: plasmoid.configuration.verbose,
                         tlyric_mode: plasmoid.configuration.tlyricMode,
                         disabled_players: plasmoid.configuration.disabledPlayers.split(","),
-                        enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(","),
+                        enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(",").map(function(provider) {
+                            providerMap[provider]
+                        }),
                         online_search_pattern: plasmoid.configuration.onlineSearchPattern,
                         disabled_folders: plasmoid.configuration.disabledFolders.split("\n")
                     }))

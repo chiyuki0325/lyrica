@@ -15,7 +15,7 @@ pub_struct!(Config {
     verbose: bool,
     tlyric_mode: u8,
     disabled_players: Vec<String>,
-    enabled_lyric_providers: Vec<String>,
+    enabled_lyric_providers: Vec<usize>,
     online_search_pattern: u8,
     disabled_folders: Vec<String>,
 });
@@ -35,16 +35,9 @@ pub fn initialize_config() -> SharedConfig {
             "firefox".to_string(),
             "chromium".to_string(),
             "plasma-browser-integration".to_string(),
-            "kdeconnect".to_string()
+            "kdeconnect".to_string(),
         ],
-        enabled_lyric_providers: vec![
-            "mpris2_text".to_string(),
-            "file".to_string(),
-            "yesplaymusic".to_string(),
-            "netease_trackid".to_string(),
-            "feeluown_netease".to_string(),
-            "netease".to_string(),
-        ],
+        enabled_lyric_providers: vec![0, 1, 2, 3, 4, 5],
         online_search_pattern: 0,
         // 0: Title + Artist
         // 1: Title only
