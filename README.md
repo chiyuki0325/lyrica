@@ -20,10 +20,11 @@ The project's name comes from the Touhou Project character Lyrica Prismriver.
 - [x] Real-time lyrics
 - [x] File lyric provider
 - [x] NetEase Cloud Music lyric provider
-  - [ ] Different search patterns
+  - [x] Different search patterns
   - [ ] Cache online lyrics
 - [x] Player API lyric provider
   - [x] Mpris2 asText
+  - [x] NetEase Track ID
   - [x] YesPlayMusic
 - [x] KDE Plasma Plasmoid frontend
 - [ ] ~~GNOME shell extension frontend~~
