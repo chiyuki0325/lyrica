@@ -14,6 +14,10 @@ fn parse_single_line(line: String) -> Result<(u128, String), ()> {
         // 解析时间
         let time_str = line_parts[0].trim_start_matches('[');
         let time_parts: Vec<&str> = time_str.split(':').collect();
+        if time_parts.len() != 2 {
+            // 时间格式错误
+            return Err(());
+        }
         let minute: i64 = time_parts[0].parse().unwrap_or(0);
         let second: f64 = time_parts[1].parse().unwrap_or(0.0);
 
