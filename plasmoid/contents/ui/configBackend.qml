@@ -7,10 +7,11 @@ Kirigami.FormLayout {
     id: page
 
     property int cfg_tlyricMode: 0
+    property int cfg_onlineSearchPattern: 0
     property alias cfg_verbose: verbose.checked
     property alias cfg_disabledPlayers: disabledPlayers.text
     property alias cfg_enabledLyricProviders: enabledLyricProviders.text
-    property alias disabledFolders: disabledFolders.text
+    property alias cfg_disabledFolders: disabledFolders.text
 
     Label {
         text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.')

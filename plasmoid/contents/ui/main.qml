@@ -34,7 +34,7 @@ PlasmoidItem {
         WebSocket {
             id: socket
             url: "ws://127.0.0.1:15649/ws"
-            onTextMessageReceived: function(message) {
+            onTextMessageReceived: (message) => {
                 message = JSON.parse(message)
                 switch (message.id) {
                     case 0:
@@ -44,7 +44,7 @@ PlasmoidItem {
                         break
                     case 1:
                         // Update lyric line
-                        var lyric = message.data.lyric_line.lyric || ""
+                        let lyric = message.data.lyric_line.lyric || ""
                         if (lyric.length > plasmoid.configuration.characterLimit) {
                             lyric = lyric.slice(0, plasmoid.configuration.characterLimit) + "..."
                         }
@@ -53,7 +53,7 @@ PlasmoidItem {
                         break
                 }
             }
-            onStatusChanged: function(status) {
+            onStatusChanged: (status) => {
                 if (status == WebSocket.Closed || status == WebSocket.Error) {
                     if (plasmoid.configuration.showReconnectingText) {
                         text.text = "[" + i18n("Reconnecting") + "...]"
@@ -62,34 +62,38 @@ PlasmoidItem {
                     }
                     updateLayoutSize()
                     socket.active = false
-                    delay(500, function() {
+                    delay(500, () => {
                         if (socket.active == false) {
                             socket.active = true
                         }
                     })
                 } else if (status == WebSocket.Open) {
                     // Send config
-                    var providerMap = {
+                    const providerMap = Object.assign({
                         "mpris2_text": 0,
                         "file": 1,
                         "yesplaymusic": 2,
                         "netease_trackid": 3,
                         "feeluown_netease": 4,
                         "netease": 5
-                    }
-                    var xhr = new XMLHttpRequest()
-                    xhr.open("POST", "http://127.0.0.1:15649/config/update", true)
-                    xhr.setRequestHeader("Content-Type", "application/json")
-                    xhr.send(JSON.stringify({
+                    })
+                    const configString = JSON.stringify({
                         verbose: plasmoid.configuration.verbose,
                         tlyric_mode: plasmoid.configuration.tlyricMode,
                         disabled_players: plasmoid.configuration.disabledPlayers.split(","),
-                        enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(",").map(function(provider) {
-                            providerMap[provider]
-                        }),
+                        enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(",").map(p => providerMap[p]),
                         online_search_pattern: plasmoid.configuration.onlineSearchPattern,
                         disabled_folders: plasmoid.configuration.disabledFolders.split("\n")
-                    }))
+                    })
+                    const xhr = new XMLHttpRequest()
+                    xhr.open("POST", "http://127.0.0.1:15649/config/update", true)
+                    xhr.setRequestHeader("Content-Type", "application/json")
+                    xhr.onreadystatechange = () => {
+                        if (xhr.readyState == 4) {
+                            console.log(xhr.responseText)
+                        }
+                    }
+                    xhr.send(configString)
                 }
             }
             active: false
@@ -124,7 +128,7 @@ PlasmoidItem {
                 priority: PlasmaCore.Action.LowPriority
                 onTriggered: {
                     socket.active = false
-                    delay(200, function() {
+                    delay(200, () => {
                         socket.active = true
                     })
                 }
