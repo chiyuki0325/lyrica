@@ -34,7 +34,11 @@ impl NeteaseLyricProvider {
         ).await;
         return if let Ok(search_result) = search_result {
             // 搜索有结果
-            let search_result: Value = from_json_str(&search_result).unwrap();
+            let search_result = from_json_str(&search_result);
+            if search_result.is_err() {
+                return (Vec::new(), false);
+            }
+            let search_result: Value = search_result.unwrap();
             for song in search_result["result"]["songs"].as_array().unwrap_or(&Vec::new()) {
                 if let Some(name) = song.get("name") {
                     if name.as_str().unwrap_or_default().to_ascii_lowercase().starts_with(
