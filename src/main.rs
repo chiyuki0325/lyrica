@@ -3,7 +3,6 @@ mod lyric_parser;
 mod player;
 mod config;
 mod web_routes;
-mod player_stream;
 mod lyric_providers;
 
 use actix_web::{web, App, HttpServer};
