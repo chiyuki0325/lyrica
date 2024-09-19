@@ -88,11 +88,12 @@ PlasmoidItem {
                         online_search_retry: plasmoid.configuration.onlineSearchRetry,
                     })
                     const xhr = new XMLHttpRequest()
+                    console.log("[lyrica] Updating config")
                     xhr.open("POST", "http://127.0.0.1:15649/config/update", true)
                     xhr.setRequestHeader("Content-Type", "application/json")
                     xhr.onreadystatechange = () => {
                         if (xhr.readyState == 4) {
-                            console.log(xhr.responseText)
+                            console.log("[lyrica]" + xhr.responseText)
                         }
                     }
                     xhr.send(configString)
@@ -125,7 +126,7 @@ PlasmoidItem {
 
         Plasmoid.contextualActions: [
             PlasmaCore.Action {
-                text: i18nc("Reload configuration", "Reload")
+                text: i18n("Reload configuration")
                 icon.name: "view-refresh-symbolic"
                 priority: PlasmaCore.Action.LowPriority
                 onTriggered: {
@@ -134,11 +135,26 @@ PlasmoidItem {
                         socket.active = true
                     })
                 }
+            },
+
+            PlasmaCore.Action {
+                text: i18n("Restart Lyrica")
+                icon.name: "collapse-all-symbolic"
+                priority: PlasmaCore.Action.LowPriority
+                onTriggered: {
+                    backendExecutable.disconnectSource(backendExecutable.command)
+                    commandLine.connectSource("bash -c 'killall lyrica --signal=SIGKILL'")
+                    delay(100, () => {
+                        backendExecutable.connectSource(backendExecutable.command)
+                    })
+                }
             }
         ]
 
+
 	    Plasma5Support.DataSource {
 	        id: backendExecutable
+	        readonly property string command: "bash -c '$HOME/.local/share/plasma/plasmoids/ink.chyk.LyricaPlasmoid/contents/bin/lyrica'"
 		    engine: "executable"
 		    connectedSources: []
 		    onSourceConnected: {
@@ -146,8 +162,14 @@ PlasmoidItem {
 		    }
 	    }
 
+	    Plasma5Support.DataSource {
+	        id: commandLine
+		    engine: "executable"
+		    connectedSources: []
+	    }
+
 		Component.onCompleted: {
-            backendExecutable.connectSource("bash -c '$HOME/.local/share/plasma/plasmoids/ink.chyk.LyricaPlasmoid/contents/bin/lyrica'")
+            backendExecutable.connectSource(backendExecutable.command)
             // TODO: use relative path
 		}
     }
