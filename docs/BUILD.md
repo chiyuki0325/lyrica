@@ -4,6 +4,8 @@
 
 Lyrica only works with Plasma version 6.0 or later.
 
+Because the project uses relative path to run the backend, so desktops installed by Flatpak or Snap and distros that use non-standard home directory like NixOS are not supported.
+
 #### Fetch source code
 
 ```bash
