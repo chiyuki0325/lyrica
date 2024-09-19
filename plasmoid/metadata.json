@@ -15,7 +15,7 @@
     "Icon": "music-amarok",
     "Id": "ink.chyk.LyricaPlasmoid",
     "Name": "Lyrica",
-    "Version": "0.9",
+    "Version": "0.10",
     "Website": "https://github.com/chiyuki0325/lyrica"
   },
   "X-Plasma-API-Minimum-Version": "6.0",
