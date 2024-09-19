@@ -18,6 +18,8 @@ pub_struct!(Config {
     enabled_lyric_providers: Vec<usize>,
     online_search_pattern: u8,
     disabled_folders: Vec<String>,
+    online_search_timeout: u64,
+    online_search_retry: bool,
 });
 
 
@@ -42,6 +44,8 @@ pub fn initialize_config() -> SharedConfig {
         // 0: Title + Artist
         // 1: Title only
         disabled_folders: vec![],
+        online_search_timeout: 10,
+        online_search_retry: true,
     };
     Arc::new(RwLock::new(config))
 }

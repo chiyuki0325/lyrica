@@ -13,6 +13,9 @@ Kirigami.FormLayout {
     property alias cfg_enabledLyricProviders: enabledLyricProviders.text
     property alias cfg_disabledFolders: disabledFolders.text
 
+    property alias cfg_onlineSearchTimeout: onlineSearchTimeout.text
+    property alias cfg_onlineSearchRetry: onlineSearchRetry.checked
+
     Label {
         text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.')
         font.bold: true
@@ -110,6 +113,18 @@ Kirigami.FormLayout {
         }
 
         property string currentVal: model[currentIndex]['value']
+    }
+
+    TextField {
+        id: onlineSearchTimeout
+        Kirigami.FormData.label: i18n("Online search timeout (seconds):")
+        placeholderText: i18n("10")
+        validator: IntValidator {bottom: 0; top: 500}
+    }
+
+    CheckBox {
+        id: onlineSearchRetry
+        text: i18n("Retry online search if failed")
     }
 
     TextArea {

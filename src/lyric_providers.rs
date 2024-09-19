@@ -24,15 +24,15 @@ impl LyricProvider {
         &self,
         music_url: &str,
         metadata: &Metadata,
-        online_search_pattern: u8,
+        config: crate::config::SharedConfig,
     ) -> (Vec<LyricLine>, bool) {
         match self {
             LyricProvider::File(provider) => provider.get_lyric(music_url).await,
-            LyricProvider::Netease(provider) => provider.get_lyric_by_metadata(metadata, online_search_pattern).await,
+            LyricProvider::Netease(provider) => provider.get_lyric_by_metadata(metadata, config).await,
             LyricProvider::Mpris2Text(provider) => provider.get_lyric_by_metadata(metadata).await,
             LyricProvider::YesPlayMusic(provider) => provider.get_lyric(music_url).await,
             LyricProvider::FeelUOwnNetease(provider) => provider.get_lyric(music_url).await,
-            LyricProvider::NeteaseTrackID(provider) => provider.get_lyric_by_metadata(metadata).await,
+            LyricProvider::NeteaseTrackID(provider) => provider.get_lyric_by_metadata(metadata, config).await,
         }
     }
 
@@ -44,6 +44,17 @@ impl LyricProvider {
             LyricProvider::YesPlayMusic(provider) => provider.is_available(music_url, metadata),
             LyricProvider::FeelUOwnNetease(provider) => provider.is_available(music_url),
             LyricProvider::NeteaseTrackID(provider) => provider.is_available_by_metadata(metadata),
+        }
+    }
+
+    pub fn get_name(&self) -> &str {
+        match self {
+            LyricProvider::File(_) => "File",
+            LyricProvider::Netease(_) => "Netease",
+            LyricProvider::Mpris2Text(_) => "Mpris2Text",
+            LyricProvider::YesPlayMusic(_) => "YesPlayMusic",
+            LyricProvider::FeelUOwnNetease(_) => "FeelUOwnNetease",
+            LyricProvider::NeteaseTrackID(_) => "NeteaseTrackID",
         }
     }
 }

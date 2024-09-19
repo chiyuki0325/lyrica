@@ -48,5 +48,11 @@
             <!-- 0: Title + Artist -->
             <!-- 1: Title only -->
         </entry>
+        <entry name="onlineSearchTimeout" type="Int">
+            <default>10</default>
+        </entry>
+        <entry name="onlineSearchRetry" type="Bool">
+            <default>true</default>
+        </entry>
     </group>
 </kcfg>

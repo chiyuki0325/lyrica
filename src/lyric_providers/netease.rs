@@ -17,13 +17,13 @@ impl NeteaseLyricProvider {
     pub async fn get_lyric_by_metadata(
         &self,
         metadata: &Metadata,
-        online_search_pattern: u8,
+        config: crate::config::SharedConfig,
     ) -> (Vec<LyricLine>, bool) {
         let ncm_api = ncm_api::MusicApi::new(0);
         let title = metadata.title().unwrap_or_default().to_string();
         let artist = metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string();
         let search_result = ncm_api.search(
-            match online_search_pattern {
+            match config.read().unwrap().online_search_pattern {
                 0 => title + " " + &artist,
                 1 => title,
                 _ => String::new(),
@@ -32,7 +32,8 @@ impl NeteaseLyricProvider {
             0,
             5,
         ).await;
-        return if let Ok(search_result) = search_result {
+
+        if let Ok(search_result) = search_result {
             // 搜索有结果
             let search_result = from_json_str(&search_result);
             if search_result.is_err() {
@@ -49,21 +50,28 @@ impl NeteaseLyricProvider {
                         let music_length = metadata.length().unwrap_or_default();
                         if music_length.checked_sub(searched_length).unwrap_or_default() < Duration::from_secs(6) {
                             // 相差不超过 6 秒
-                            let lyric_result = ncm_api.song_lyric(song["id"].as_u64().unwrap()).await;
-                            if let Ok(lyric_result) = lyric_result {
-                                let lyric_lines = lyric_result.lyric;
-                                if (lyric_lines.is_empty()) || (
-                                    lyric_lines.len() == 1 && lyric_lines[0].ends_with("纯音乐，请欣赏")
-                                    // 纯音乐
-                                ) {
-                                    // 没有歌词
-                                    return (Vec::new(), false);
+
+                            let mut success = !config.read().unwrap().online_search_retry;
+
+                            #[allow(unused_assignments)]
+                            while !success {
+                                let lyric_result = ncm_api.song_lyric(song["id"].as_u64().unwrap()).await;
+                                if let Ok(lyric_result) = lyric_result {
+                                    success = true;
+                                    let lyric_lines = lyric_result.lyric;
+                                    if (lyric_lines.is_empty()) || (
+                                        lyric_lines.len() == 1 && lyric_lines[0].ends_with("纯音乐，请欣赏")
+                                        // 纯音乐
+                                    ) {
+                                        // 没有歌词
+                                        return (Vec::new(), false);
+                                    }
+                                    let tlyric_lines = lyric_result.tlyric;
+                                    return (
+                                        parse_netease_lyrics(lyric_lines, tlyric_lines),
+                                        true
+                                    );
                                 }
-                                let tlyric_lines = lyric_result.tlyric;
-                                return (
-                                    parse_netease_lyrics(lyric_lines, tlyric_lines),
-                                    true
-                                );
                             }
                         }
                     }
@@ -73,6 +81,6 @@ impl NeteaseLyricProvider {
         } else {
             // 搜索没结果
             (Vec::new(), false)
-        };
+        }
     }
 }

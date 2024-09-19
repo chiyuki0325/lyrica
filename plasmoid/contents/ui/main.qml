@@ -83,7 +83,9 @@ PlasmoidItem {
                         disabled_players: plasmoid.configuration.disabledPlayers.split(","),
                         enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(",").map(p => providerMap[p]),
                         online_search_pattern: plasmoid.configuration.onlineSearchPattern,
-                        disabled_folders: plasmoid.configuration.disabledFolders.split("\n")
+                        disabled_folders: plasmoid.configuration.disabledFolders.split("\n"),
+                        online_search_timeout: plasmoid.configuration.onlineSearchTimeout,
+                        online_search_retry: plasmoid.configuration.onlineSearchRetry,
                     })
                     const xhr = new XMLHttpRequest()
                     xhr.open("POST", "http://127.0.0.1:15649/config/update", true)

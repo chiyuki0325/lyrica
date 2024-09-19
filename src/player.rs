@@ -123,12 +123,12 @@ pub async fn mpris_loop(
                             cache.is_lyric = false;
                             for provider_id in config.read().unwrap().enabled_lyric_providers.iter() {
                                 if let Some(provider) = lyric_providers::LYRIC_PROVIDERS.get(provider_id.clone()) {
-                                    /*
+
                                     if config.read().unwrap().verbose {
-                                        println!("Trying provider: {}", name);
+                                        println!("Trying provider: {}", provider.get_name());
                                     }
                                     // 由于现在使用 provider ID，因此注释掉
-                                    */
+
                                     // 这个 provider 可用
                                     if provider.is_available(&url, &metadata) {
                                         // 这个 provider 可以处理这个 URL
@@ -136,12 +136,12 @@ pub async fn mpris_loop(
                                         (lyric, success) = provider.get_lyric(
                                             &url,
                                             &metadata,
-                                            config.read().unwrap().online_search_pattern
+                                            config.clone(),
                                         ).await;
                                         if success {
                                             // 成功获取歌词
                                             if config.read().unwrap().verbose {
-                                                println!("Got lyric from provider [{}]", provider_id);
+                                                println!("Got lyric from provider {}", provider.get_name());
                                             }
                                             // 解析歌词并且存入 lyric
                                             cache.is_lyric = true;
