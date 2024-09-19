@@ -4,6 +4,8 @@ use serde_json::{
     from_str as from_json_str,
 };
 use std::time::Duration;
+use isahc::HttpClient;
+use isahc::prelude::Configurable;
 use crate::lyric_parser::{
     LyricLine,
     parse_netease_lyrics,
@@ -19,7 +21,14 @@ impl NeteaseLyricProvider {
         metadata: &Metadata,
         config: crate::config::SharedConfig,
     ) -> (Vec<LyricLine>, bool) {
-        let ncm_api = ncm_api::MusicApi::new(0);
+        let client = HttpClient::builder()
+            .timeout(Duration::from_secs(
+                config.read().unwrap().online_search_timeout
+            ))
+            .cookies()
+            .build()
+            .expect("初始化网络请求失败!");
+        let ncm_api = ncm_api::MusicApi::from_client(client);
         let title = metadata.title().unwrap_or_default().to_string();
         let artist = metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string();
         let search_result = ncm_api.search(

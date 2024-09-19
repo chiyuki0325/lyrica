@@ -31,6 +31,7 @@ impl NeteaseTrackIDLyricProvider {
                 let mut success = !config.read().unwrap().online_search_retry;
                 #[allow(unused_assignments)]
                 while !success {
+                    println!("Trying to get lyric for track_id: {}", music_id);
                     let lyric_result = ncm_api.song_lyric(music_id).await;
                     if let Ok(lyric_result) = lyric_result {
                         success = true;
