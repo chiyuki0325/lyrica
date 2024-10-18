@@ -20,6 +20,8 @@ pub_struct!(Config {
     disabled_folders: Vec<String>,
     online_search_timeout: u64,
     online_search_retry: bool,
+    lyric_search_folder: String,
+    alt_folder_exists: bool,
 });
 
 
@@ -46,6 +48,8 @@ pub fn initialize_config() -> SharedConfig {
         disabled_folders: vec![],
         online_search_timeout: 10,
         online_search_retry: true,
+        lyric_search_folder: "~/Music/lrc".to_string(),
+        alt_folder_exists: false,
     };
     Arc::new(RwLock::new(config))
 }

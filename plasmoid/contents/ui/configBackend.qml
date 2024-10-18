@@ -12,6 +12,7 @@ Kirigami.FormLayout {
     property alias cfg_disabledPlayers: disabledPlayers.text
     property alias cfg_enabledLyricProviders: enabledLyricProviders.text
     property alias cfg_disabledFolders: disabledFolders.text
+    property alias cfg_lyricSearchFolder: lyricSearchFolder.text
 
     property alias cfg_onlineSearchTimeout: onlineSearchTimeout.text
     property alias cfg_onlineSearchRetry: onlineSearchRetry.checked
@@ -131,6 +132,12 @@ Kirigami.FormLayout {
         id: disabledFolders
         Kirigami.FormData.label: i18n("Disabled folders (one per line):\nMusics in these folders will be treated as instrumental and won't be searched for lyrics.")
         placeholderText: i18n("/home/user/Music/lyric\n/home/user/Music/lyric2")
+    }
+
+    TextArea {
+        id: lyricSearchFolder
+        Kirigami.FormData.label: i18n("Alternative folder to search for .lrc files:")
+        placeholderText: i18n("/home/user/Music/lrc")
     }
 
 }

@@ -11,7 +11,11 @@ use metaflac::Tag as FLACTag;
 pub struct FileLyricProvider {}
 
 impl FileLyricProvider {
-    pub async fn get_lyric(&self, music_url: &str) -> (Vec<LyricLine>, bool) {
+    pub async fn get_lyric(
+        &self,
+        music_url: &str,
+        config: crate::config::SharedConfig
+    ) -> (Vec<LyricLine>, bool) {
         match Self::parse_file_url(music_url) {
             Ok(path) => {
                 // 此时得到了音乐文件的路径
@@ -20,7 +24,10 @@ impl FileLyricProvider {
                     (parse_lyrics(lyric), true)
                 } else {
                     // 音乐没有 tag，直接读取 lrc
-                    if let Ok(lrc) = Self::read_lrc_file(&path) {
+                    if let Ok(lrc) = Self::read_lrc_file(
+                        &path,
+                        config.read().unwrap().lyric_search_folder.clone(),
+                    ) {
                         // lrc 文件存在
                         (parse_lyrics(lrc), true)
                     } else {
@@ -58,10 +65,17 @@ impl FileLyricProvider {
         }
     }
 
-    fn read_lrc_file(path: &str) -> Result<String, String> {
+    fn read_lrc_file(
+        path: &str,
+        search_folder: String,
+    ) -> Result<String, String> {
         let path = Path::new(path).with_extension("lrc");
         if !path.exists() {
-            return Err("Lrc file not found".to_string());
+            // search in alternative folder
+            let path = Path::new(&search_folder).join(path.file_name().unwrap());
+            if !path.exists() {
+                return Err("Lrc file not found".to_string());
+            }
         }
         std::fs::read_to_string(path.to_str().unwrap())
             .map_err(|e| format!("Failed to read file: {}", e))

@@ -10,6 +10,12 @@ pub(crate) async fn update_config(
     }
     let mut config = config.write().unwrap();
     *config = config_req.0;
+    // check if lyric_search_folder exists
+    config.alt_folder_exists = if (std::fs::metadata(&config.lyric_search_folder)).is_err() {
+        false
+    } else {
+        true
+    };
     HttpResponse::Ok()
         .content_type("application/json")
         .body(r#"{"status": "ok"}"#)
