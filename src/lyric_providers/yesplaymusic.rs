@@ -21,29 +21,29 @@ impl YesPlayMusicLyricProvider {
         }
     }
 
-    pub async fn get_lyric(&self, music_url: &str) -> (Vec<LyricLine>, bool) {
+    pub async fn get_lyric(&self, music_url: &str) -> (Vec<LyricLine>, bool, bool) {
         let req = Request::get(
             format!("http://localhost:10754/lyric?id={}", music_url.strip_prefix("/trackid/").unwrap())
         ).body(()).unwrap();
 
         let res = self.client.send_async(req).await;
 
-        return if let Ok(mut res) = res {
-            return if res.status().is_success() {
+        if let Ok(mut res) = res {
+            if res.status().is_success() {
                 let lyric: JsonValue = res.json().await.unwrap();
                 let lyric_str;
                 let tlyric_str;
                 if let Some(lyric) = lyric.get("lrc").or(lyric.get("lyric")) {
                     lyric_str = lyric.get("lyric").unwrap().as_str().unwrap();
-                } else { return (Vec::new(), false); };
+                } else { return (Vec::new(), false, true); };
                 if let Some(tlyric) = lyric.get("tlyric") {
                     tlyric_str = tlyric.get("lyric").unwrap().as_str().unwrap();
-                    return (parse_lyrics(format!("{}\n{}", lyric_str, tlyric_str)), true);
+                    (parse_lyrics(format!("{}\n{}", lyric_str, tlyric_str)), true, false)
                 } else {
-                    return (parse_lyrics(lyric_str.to_string()), true);
+                    (parse_lyrics(lyric_str.to_string()), true, false)
                 }
-            } else { (Vec::new(), false) };
-        } else { (Vec::new(), false) };
+            } else { (Vec::new(), false, true) }
+        } else { (Vec::new(), false, true) }
     }
 
     pub fn is_available(&self, url: &str, metadata: &Metadata) -> bool {

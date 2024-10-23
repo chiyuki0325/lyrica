@@ -86,6 +86,7 @@ PlasmoidItem {
                         disabled_folders: plasmoid.configuration.disabledFolders.split("\n"),
                         online_search_timeout: plasmoid.configuration.onlineSearchTimeout,
                         online_search_retry: plasmoid.configuration.onlineSearchRetry,
+                        max_retries: 3,  // Not configurable
                         lyric_search_folder: plasmoid.configuration.lyricSearchFolder || "~/User/Music/lrc",
                         alt_folder_exists: false,
                     })

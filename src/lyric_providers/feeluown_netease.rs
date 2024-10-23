@@ -8,7 +8,7 @@ pub struct FeelUOwnNeteaseLyricProvider {}
 
 
 impl FeelUOwnNeteaseLyricProvider {
-    pub async fn get_lyric(&self, url: &str) -> (Vec<LyricLine>, bool) {
+    pub async fn get_lyric(&self, url: &str) -> (Vec<LyricLine>, bool, bool) {
         let ncm_api = ncm_api::MusicApi::new(0);
         let music_id = url.strip_prefix("fuo://netease/songs/").unwrap().parse::<u64>().unwrap();
         let lyric_result = ncm_api.song_lyric(music_id).await;
@@ -17,10 +17,10 @@ impl FeelUOwnNeteaseLyricProvider {
             let tlyric_lines = lyric_result.tlyric;
             return (
                 parse_netease_lyrics(lyric_lines, tlyric_lines),
-                true
+                true, false
             );
         }
-        (Vec::new(), false)
+        (Vec::new(), false, true)
     }
 
     pub fn is_available(&self, url: &str) -> bool {

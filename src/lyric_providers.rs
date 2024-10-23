@@ -25,7 +25,7 @@ impl LyricProvider {
         music_url: &str,
         metadata: &Metadata,
         config: crate::config::SharedConfig,
-    ) -> (Vec<LyricLine>, bool) {
+    ) -> (Vec<LyricLine>, bool, bool) {
         match self {
             LyricProvider::File(provider) => provider.get_lyric(music_url, config).await,
             LyricProvider::Netease(provider) => provider.get_lyric_by_metadata(metadata, config).await,

@@ -16,7 +16,7 @@ impl NeteaseTrackIDLyricProvider {
         &self,
         metadata: &Metadata,
         config: crate::config::SharedConfig,
-    ) -> (Vec<LyricLine>, bool) {
+    ) -> (Vec<LyricLine>, bool, bool) {
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(
                 config.read().unwrap().online_search_timeout
@@ -29,8 +29,11 @@ impl NeteaseTrackIDLyricProvider {
             // let music_id = track_id.rsplit("/").next().unwrap().parse::<u64>().unwrap();
             if let Ok(music_id) = track_id.as_str().rsplit("/").next().unwrap().parse::<u64>() {
                 let mut success = !config.read().unwrap().online_search_retry;
+                let mut try_count = 0;
+                let max_retries = config.read().unwrap().max_retries;
+
                 #[allow(unused_assignments)]
-                while !success {
+                while !success && try_count < max_retries {
                     println!("Trying to get lyric for track_id: {}", music_id);
                     let lyric_result = ncm_api.song_lyric(music_id).await;
                     if let Ok(lyric_result) = lyric_result {
@@ -39,13 +42,16 @@ impl NeteaseTrackIDLyricProvider {
                         let tlyric_lines = lyric_result.tlyric;
                         return (
                             parse_netease_lyrics(lyric_lines, tlyric_lines),
-                            true
+                            true, false
                         );
+                    } else {
+                        try_count += 1;
                     }
                 }
+                return (Vec::new(), false, true);  // 达到最大重试次数
             }
         }
-        (Vec::new(), false)
+        (Vec::new(), false, true)
     }
 
     pub fn is_available_by_metadata(&self, metadata: &Metadata) -> bool {

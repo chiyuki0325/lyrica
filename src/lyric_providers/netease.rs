@@ -20,7 +20,7 @@ impl NeteaseLyricProvider {
         &self,
         metadata: &Metadata,
         config: crate::config::SharedConfig,
-    ) -> (Vec<LyricLine>, bool) {
+    ) -> (Vec<LyricLine>, bool, bool) {
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(
                 config.read().unwrap().online_search_timeout
@@ -46,7 +46,7 @@ impl NeteaseLyricProvider {
             // 搜索有结果
             let search_result = from_json_str(&search_result);
             if search_result.is_err() {
-                return (Vec::new(), false);
+                return (Vec::new(), false, true);
             }
             let search_result: Value = search_result.unwrap();
             for song in search_result["result"]["songs"].as_array().unwrap_or(&Vec::new()) {
@@ -61,9 +61,11 @@ impl NeteaseLyricProvider {
                             // 相差不超过 6 秒
 
                             let mut success = !config.read().unwrap().online_search_retry;
+                            let mut try_count = 0;
+                            let max_retries = config.read().unwrap().max_retries;
 
                             #[allow(unused_assignments)]
-                            while !success {
+                            while !success && try_count < max_retries {
                                 let lyric_result = ncm_api.song_lyric(song["id"].as_u64().unwrap()).await;
                                 if let Ok(lyric_result) = lyric_result {
                                     success = true;
@@ -73,23 +75,26 @@ impl NeteaseLyricProvider {
                                         // 纯音乐
                                     ) {
                                         // 没有歌词
-                                        return (Vec::new(), false);
+                                        return (Vec::new(), false, true);
                                     }
                                     let tlyric_lines = lyric_result.tlyric;
                                     return (
                                         parse_netease_lyrics(lyric_lines, tlyric_lines),
-                                        true
+                                        true, false
                                     );
+                                } else {
+                                    try_count += 1;
                                 }
                             }
+                            return (Vec::new(), false, true);  // 达到最大重试次数
                         }
                     }
                 }
             }
-            (Vec::new(), false)
+            (Vec::new(), false, true)
         } else {
             // 搜索没结果
-            (Vec::new(), false)
+            (Vec::new(), false, true)
         }
     }
 }

@@ -20,6 +20,7 @@ pub_struct!(Config {
     disabled_folders: Vec<String>,
     online_search_timeout: u64,
     online_search_retry: bool,
+    max_retries: u8,
     lyric_search_folder: String,
     alt_folder_exists: bool,
 });
@@ -48,6 +49,7 @@ pub fn initialize_config() -> SharedConfig {
         disabled_folders: vec![],
         online_search_timeout: 10,
         online_search_retry: true,
+        max_retries: 3,
         lyric_search_folder: "~/Music/lrc".to_string(),
         alt_folder_exists: false,
     };

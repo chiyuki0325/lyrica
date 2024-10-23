@@ -15,13 +15,17 @@ impl FileLyricProvider {
         &self,
         music_url: &str,
         config: crate::config::SharedConfig
-    ) -> (Vec<LyricLine>, bool) {
+    ) -> (Vec<LyricLine>, bool, bool) {
         match Self::parse_file_url(music_url) {
             Ok(path) => {
                 // 此时得到了音乐文件的路径
+                if config.read().unwrap().disabled_folders.contains(&path) {
+                    // 文件夹被禁用
+                    return (Vec::new(), false, false);
+                }
                 if let Ok(lyric) = Self::read_tag_lyric(&path) {
                     // 读取 tag 成功
-                    (parse_lyrics(lyric), true)
+                    (parse_lyrics(lyric), true, false)
                 } else {
                     // 音乐没有 tag，直接读取 lrc
                     if let Ok(lrc) = Self::read_lrc_file(
@@ -29,16 +33,16 @@ impl FileLyricProvider {
                         config.read().unwrap().lyric_search_folder.clone(),
                     ) {
                         // lrc 文件存在
-                        (parse_lyrics(lrc), true)
+                        (parse_lyrics(lrc), true, false)
                     } else {
                         // lrc 文件也不存在
-                        (Vec::new(), false)
+                        (Vec::new(), false, true)
                     }
                 }
             }
             Err(e) => {
                 eprintln!("Failed to parse file URL: {}", e);
-                (Vec::new(), false)
+                (Vec::new(), false, true)
             }
         }
     }

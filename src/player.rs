@@ -133,7 +133,8 @@ pub async fn mpris_loop(
                                     if provider.is_available(&url, &metadata) {
                                         // 这个 provider 可以处理这个 URL
                                         let success;
-                                        (lyric, success) = provider.get_lyric(
+                                        let try_next;
+                                        (lyric, success, try_next) = provider.get_lyric(
                                             &url,
                                             &metadata,
                                             config.clone(),
@@ -147,6 +148,10 @@ pub async fn mpris_loop(
                                             cache.is_lyric = true;
                                             idx = 0;
                                             last_time = 0;
+                                            break;
+                                        } else if !try_next {
+                                            // 无法获取歌词，但是不需要尝试下一个 provider
+                                            // 目前此分支只会在音乐文件在 disabled_folders 中时触发
                                             break;
                                         }
                                     }
