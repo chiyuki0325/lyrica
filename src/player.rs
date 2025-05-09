@@ -3,7 +3,6 @@ use tokio::sync::broadcast;
 use tokio::time::sleep;
 use crate::{ChannelMessage, lyric_providers};
 use crate::config::SharedConfig;
-use std::sync::{Arc, Mutex};
 use crate::lyric_parser::{
     LyricLine,
 };
@@ -20,11 +19,11 @@ pub async fn mpris_loop(
     tx: broadcast::Sender<ChannelMessage>,
     config: SharedConfig,
 ) {
-    let cache = Arc::new(Mutex::new(MprisInfo {
+    let mut cache = MprisInfo {
         url: String::new(),
         is_lyric: false,
         player_running: false,
-    }));
+    };
     let player_finder = mpris::PlayerFinder::new().expect("Failed to create player finder");
 
     loop {
@@ -32,13 +31,13 @@ pub async fn mpris_loop(
 
             if player.is_err() {
                 // 播放器已经关闭（此代码块可能会被执行多次，此时 player 一直是 DBusError）
-                if cache.lock().unwrap().player_running {
+                if cache.player_running {
                     if config.read().unwrap().verbose {
                         println!("Player closed, exiting loop...");
                     }
                     tx.send(ChannelMessage::UpdateMusicInfo("".to_string(), "".to_string())).unwrap();
                     // 跳出 loop 块，继续等待下一个播放器
-                    cache.lock().unwrap().player_running = false;
+                    cache.player_running = false;
                 }
                 continue;
             }
@@ -66,7 +65,7 @@ pub async fn mpris_loop(
                 continue;
             }
 
-            cache.lock().unwrap().player_running = true;
+            cache.player_running = true;
 
             let mut idx = 0;
             let mut last_time: u128 = 0;
@@ -92,9 +91,6 @@ pub async fn mpris_loop(
                                 metadata.art_url().unwrap_or_default().to_string()
                             }
                         };
-
-                        let mut cache = cache.lock().unwrap();
-
 
                         if cache.url != url {
                             // 歌曲更改
@@ -167,14 +163,14 @@ pub async fn mpris_loop(
                         }
                         tx.send(ChannelMessage::UpdateMusicInfo("".to_string(), "".to_string())).unwrap();
                         // 跳出 loop 块，继续等待下一个播放器
-                        cache.lock().unwrap().player_running = false;
+                        cache.player_running = false;
                         break;
                     }
                 }
                 // 歌词是否变化？
 
                 // 获取当前时间
-                if cache.lock().unwrap().is_lyric {
+                if cache.is_lyric {
                     let current_time = player.get_position().unwrap_or_default().as_micros();
 
                     if current_time < last_time {
@@ -217,10 +213,10 @@ pub async fn mpris_loop(
                     last_time = current_time;
                 }
 
-                sleep(Duration::from_millis(50)).await;
+                sleep(Duration::from_millis(100)).await;
             }
         }
-        tokio::time::sleep(Duration::from_micros(500)).await;
+        tokio::time::sleep(Duration::from_secs(1)).await;
     }
 }
 
