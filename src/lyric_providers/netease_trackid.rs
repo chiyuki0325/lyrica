@@ -19,7 +19,7 @@ impl NeteaseTrackIDLyricProvider {
     ) -> (Vec<LyricLine>, bool, bool) {
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(
-                config.read().unwrap().online_search_timeout
+                config.read().await.online_search_timeout
             ))
             .cookies()
             .build()
@@ -28,9 +28,9 @@ impl NeteaseTrackIDLyricProvider {
         if let Some(track_id) = metadata.track_id() {
             // let music_id = track_id.rsplit("/").next().unwrap().parse::<u64>().unwrap();
             if let Ok(music_id) = track_id.as_str().rsplit("/").next().unwrap().parse::<u64>() {
-                let mut success = !config.read().unwrap().online_search_retry;
+                let mut success = !config.read().await.online_search_retry;
                 let mut try_count = 0;
-                let max_retries = config.read().unwrap().max_retries;
+                let max_retries = config.read().await.max_retries;
 
                 #[allow(unused_assignments)]
                 while !success && try_count < max_retries {

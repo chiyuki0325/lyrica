@@ -32,7 +32,7 @@ pub async fn mpris_loop(
             if player.is_err() {
                 // 播放器已经关闭（此代码块可能会被执行多次，此时 player 一直是 DBusError）
                 if cache.player_running {
-                    if config.read().unwrap().verbose {
+                    if config.read().await.verbose {
                         println!("Player closed, exiting loop...");
                     }
                     tx.send(ChannelMessage::UpdateMusicInfo("".to_string(), "".to_string())).unwrap();
@@ -45,16 +45,16 @@ pub async fn mpris_loop(
             let player = player.unwrap();
 
             // 得到播放器，进入循环
-            if config.read().unwrap().verbose {
+            if config.read().await.verbose {
                 println!("New player connected: {:?}", player.bus_name());
             }
             let player_name = String::from(player.bus_name());
             let player_name = player_name.strip_prefix("org.mpris.MediaPlayer2.").unwrap();
 
             let mut is_disabled = false;
-            for disabled_player in config.read().unwrap().disabled_players.iter() {
+            for disabled_player in config.read().await.disabled_players.iter() {
                 if player_name.starts_with(disabled_player) {
-                    if config.read().unwrap().verbose {
+                    if config.read().await.verbose {
                         println!("Player {} detected, but disabled in the config.", player_name);
                     }
                     is_disabled = true;
@@ -78,7 +78,7 @@ pub async fn mpris_loop(
                 match player.get_metadata() {
                     Ok(metadata) => {
                         // 更新设置
-                        tlyric_mode = config.read().unwrap().tlyric_mode;
+                        tlyric_mode = config.read().await.tlyric_mode;
 
                         // 判断歌曲是否更改
 
@@ -101,7 +101,7 @@ pub async fn mpris_loop(
 
                         if cache.url != url {
                             // 歌曲更改
-                            if config.read().unwrap().verbose {
+                            if config.read().await.verbose {
                                 println!("New song detected: {}", url);
                             }
                             cache.url = url.clone();
@@ -124,10 +124,10 @@ pub async fn mpris_loop(
                             // 尝试获取歌词
                             lyric = Vec::new();
                             cache.is_lyric = false;
-                            for provider_id in config.read().unwrap().enabled_lyric_providers.iter() {
+                            for provider_id in config.read().await.enabled_lyric_providers.iter() {
                                 if let Some(provider) = lyric_providers::LYRIC_PROVIDERS.get(provider_id.clone()) {
 
-                                    if config.read().unwrap().verbose {
+                                    if config.read().await.verbose {
                                         println!("Trying provider: {}", provider.get_name());
                                     }
                                     // 由于现在使用 provider ID，因此注释掉
@@ -144,7 +144,7 @@ pub async fn mpris_loop(
                                         ).await;
                                         if success {
                                             // 成功获取歌词
-                                            if config.read().unwrap().verbose {
+                                            if config.read().await.verbose {
                                                 println!("Got lyric from provider {}", provider.get_name());
                                             }
                                             // 解析歌词并且存入 lyric
@@ -165,7 +165,7 @@ pub async fn mpris_loop(
                     }
                     Err(_) => {
                         // 播放器已经关闭。
-                        if config.read().unwrap().verbose {
+                        if config.read().await.verbose {
                             println!("Player closed, exiting loop...");
                         }
                         tx.send(ChannelMessage::UpdateMusicInfo("".to_string(), "".to_string())).unwrap();

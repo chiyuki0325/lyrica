@@ -19,7 +19,7 @@ impl FileLyricProvider {
         match Self::parse_file_url(music_url) {
             Ok(path) => {
                 // 此时得到了音乐文件的路径
-                if config.read().unwrap().disabled_folders.contains(&path) {
+                if config.read().await.disabled_folders.contains(&path) {
                     // 文件夹被禁用
                     return (Vec::new(), false, false);
                 }
@@ -30,7 +30,7 @@ impl FileLyricProvider {
                     // 音乐没有 tag，直接读取 lrc
                     if let Ok(lrc) = Self::read_lrc_file(
                         &path,
-                        config.read().unwrap().lyric_search_folder.clone(),
+                        config.read().await.lyric_search_folder.clone(),
                     ) {
                         // lrc 文件存在
                         (parse_lyrics(lrc), true, false)

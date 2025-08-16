@@ -70,9 +70,11 @@ impl Handler<ChannelMessage> for LyricaSocket {
     fn handle(&mut self, msg: ChannelMessage, ctx: &mut Self::Context) {
         match msg {
             ChannelMessage::UpdateLyricLine(time, lyric) => {
-                if self.config.read().unwrap().verbose {
+                /*
+                if self.config.read().await.verbose {
                     println!("[{time}] {lyric}");
                 }
+                 */
 
                 let packet = WebSocketPacket {
                     id: 1,
@@ -83,9 +85,11 @@ impl Handler<ChannelMessage> for LyricaSocket {
                 ctx.text(serde_json::to_string(&packet).unwrap());
             }
             ChannelMessage::UpdateMusicInfo(title, artist) => {
+                /*
                 if self.config.read().unwrap().verbose {
                     println!("[{title} - {artist}]");
                 }
+                 */
 
                 let packet = WebSocketPacket {
                     id: 0,
