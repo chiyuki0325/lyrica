@@ -21,9 +21,10 @@ impl NeteaseLyricProvider {
         metadata: &Metadata,
         config: crate::config::SharedConfig,
     ) -> (Vec<LyricLine>, bool, bool) {
+        let _config = config.read().await;
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(
-                config.read().await.online_search_timeout
+                _config.online_search_timeout
             ))
             .cookies()
             .build()
@@ -32,7 +33,7 @@ impl NeteaseLyricProvider {
         let title = metadata.title().unwrap_or_default().to_string();
         let artist = metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string();
         let search_result = ncm_api.search(
-            match config.read().await.online_search_pattern {
+            match _config.online_search_pattern {
                 0 => title + " " + &artist,
                 1 => title,
                 _ => String::new(),
@@ -60,9 +61,9 @@ impl NeteaseLyricProvider {
                         if music_length.checked_sub(searched_length).unwrap_or_default() < Duration::from_secs(6) {
                             // 相差不超过 6 秒
 
-                            let mut success = !config.read().await.online_search_retry;
+                            let mut success = !_config.online_search_retry;
                             let mut try_count = 0;
-                            let max_retries = config.read().await.max_retries;
+                            let max_retries = _config.max_retries;
 
                             #[allow(unused_assignments)]
                             while !success && try_count < max_retries {
@@ -71,7 +72,7 @@ impl NeteaseLyricProvider {
                                     success = true;
                                     let lyric_lines = lyric_result.lyric;
                                     if (lyric_lines.is_empty()) || (
-                                        lyric_lines.len() == 1 && lyric_lines[0].ends_with("纯音乐，请欣赏")
+                                        lyric_lines.len() == 1 && lyric_lines[0].ends_with("纯音乐，欣赏")
                                         // 纯音乐
                                     ) {
                                         // 没有歌词

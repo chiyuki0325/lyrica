@@ -5,6 +5,7 @@ pub struct LyricLine {
     pub tlyric: Option<String>,
 }
 
+
 fn parse_single_line(line: String) -> Result<(u128, String), ()> {
     // 解析一行歌词
     let line = line.trim();
@@ -74,12 +75,30 @@ pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
     lyrics
 }
 
+pub fn merge_lyrics(mut lyrics: Vec<LyricLine>, tlyrics: Vec<LyricLine>) -> Vec<LyricLine> {
+    let mut j = 0;
+
+    for i in 0..lyrics.len() {
+        while j < tlyrics.len() && tlyrics[j].time < lyrics[i].time {
+            j += 1;
+        }
+        if j < tlyrics.len() && tlyrics[j].time == lyrics[i].time {
+            lyrics[i].tlyric = Some(tlyrics[j].lyric.clone());
+        }
+    }
+
+    lyrics
+}
 
 pub(crate) fn parse_netease_lyrics(
     lyric_lines: Vec<String>,
     tlyric_lines: Vec<String>,
 ) -> Vec<LyricLine> {
-    parse_lyrics(
-        lyric_lines.join("\n") + "\n" + &tlyric_lines.join("\n")
-    )
+    if tlyric_lines.len() > 0 {
+        let lyrics = parse_lyrics(lyric_lines.join("\n"));
+        let tlyrics = parse_lyrics(tlyric_lines.join("\n"));
+        merge_lyrics(lyrics, tlyrics)
+    } else {
+        parse_lyrics(lyric_lines.join("\n"))
+    }
 }
