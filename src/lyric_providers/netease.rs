@@ -51,10 +51,10 @@ impl NeteaseLyricProvider {
             let search_result: Value = search_result.unwrap();
             for song in search_result["result"]["songs"].as_array().unwrap_or(&Vec::new()) {
                 if let Some(name) = song.get("name") {
-                    if name.as_str().unwrap_or_default().to_ascii_lowercase().starts_with(
-                        metadata.title().unwrap_or_default().to_ascii_lowercase().as_str()
-                        // 此比较方法可以使带（翻唱版）等后缀的歌曲也匹配成功
-                    ) {
+                    let lower_searched_name = name.as_str().unwrap_or_default().to_ascii_lowercase();
+                    let lower_metadata_name = metadata.title().unwrap_or_default().to_ascii_lowercase();
+                    // 此比较方法可以使带（翻唱版）等后缀的歌曲也匹配成功
+                    if lower_searched_name.starts_with(&lower_metadata_name) || lower_metadata_name.starts_with(&lower_searched_name) {
                         let searched_length = Duration::from_millis(song["duration"].as_u64().unwrap());
                         let music_length = metadata.length().unwrap_or_default();
                         if music_length.checked_sub(searched_length).unwrap_or_default() < Duration::from_secs(6) {
