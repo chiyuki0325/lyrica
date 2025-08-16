@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, RwLock};
-use serde::{Serialize, Deserialize};
 
 // source: https://stackoverflow.com/questions/53866508
 macro_rules! pub_struct {
@@ -25,7 +25,6 @@ pub_struct!(Config {
     alt_folder_exists: bool,
 });
 
-
 pub type SharedConfig = Arc<RwLock<Config>>;
 
 pub fn initialize_config() -> SharedConfig {
@@ -36,12 +35,7 @@ pub fn initialize_config() -> SharedConfig {
         // 1: show tlyric instead of lyric if available
         // 2: Lyric | TLyric
         // 3: TLyric | Lyric
-        disabled_players: vec![
-            "firefox".to_string(),
-            "chromium".to_string(),
-            "plasma-browser-integration".to_string(),
-            "kdeconnect".to_string(),
-        ],
+        disabled_players: vec![],
         enabled_lyric_providers: vec![0, 1, 2, 3, 4, 5],
         online_search_pattern: 0,
         // 0: Title + Artist

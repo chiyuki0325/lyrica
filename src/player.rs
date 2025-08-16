@@ -85,10 +85,17 @@ pub async fn mpris_loop(
                         let url = if let Some(_url) = metadata.url() {
                             _url.to_string()
                         } else {
+                            let art_url = metadata.art_url().unwrap_or_default().to_string();
                             if let Some(_track_id) = metadata.track_id() {
-                                _track_id.to_string()
+                                let track_id = _track_id.to_string();
+                                if track_id.contains("org/mpris") || track_id.contains("MediaPlayer2") {
+                                    // KDE Connect quirk
+                                    art_url
+                                } else {
+                                    track_id
+                                }
                             } else {
-                                metadata.art_url().unwrap_or_default().to_string()
+                                art_url
                             }
                         };
 
