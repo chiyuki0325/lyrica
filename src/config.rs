@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 // source: https://stackoverflow.com/questions/53866508
 macro_rules! pub_struct {
