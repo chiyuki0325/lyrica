@@ -207,18 +207,17 @@ pub async fn mpris_loop(
 
                 // 歌词是否变化？
                 if cache.is_lyric {
-                    // 如果进度比上一次小，重算 idx
+                    // 如果进度比上一次小，重置 idx
                     if current_time < last_effective_time {
                         idx = 0;
-                        while idx < lyric.len() && current_time >= lyric[idx].time {
-                            idx += 1;
-                        }
                     }
-
-                    let line = lyric.get(idx);
-                    if let Some(line) = line {
-                        if current_time >= line.time {
+                    if let Some(last_line) = lyric.get(idx) {
+                        if current_time >= last_line.time {
                             // 歌词变化
+                            while idx < lyric.len() - 1 && current_time >= lyric[idx + 1].time {
+                                idx += 1;
+                            }
+                            let line = &lyric[idx];
                             let line_lyric = if line.tlyric.is_some() {
                                 // 有翻译
                                 let tlyric_clone = line.tlyric.clone().unwrap();
@@ -238,9 +237,6 @@ pub async fn mpris_loop(
                             };
 
                             tx.send(ChannelMessage::UpdateLyricLine(line.time, line_lyric)).unwrap();
-                            while idx < lyric.len() && current_time >= lyric[idx].time {
-                                idx += 1;
-                            }
                         }
                     }
 
