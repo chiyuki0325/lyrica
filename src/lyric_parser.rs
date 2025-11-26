@@ -14,13 +14,22 @@ fn parse_single_line(line: String) -> Result<(u128, String), ()> {
     if line_parts.len() > 1 {
         // 解析时间
         let time_str = line_parts[0].trim_start_matches('[');
-        let time_parts: Vec<&str> = time_str.split(':').collect();
-        if time_parts.len() != 2 {
-            // 时间格式错误
-            return Err(());
-        }
-        let minute: i64 = time_parts[0].parse().unwrap_or(0);
-        let second: f64 = time_parts[1].parse().unwrap_or(0.0);
+        let (minute, second) = match time_str.split(':').collect::<Vec<_>>().as_slice() {
+            [min_str, sec_str] => {
+                let minute: i64 = min_str.parse().unwrap_or(0);
+                let second: f64 = sec_str.replace(",", ".").parse().unwrap_or(0.0);
+                (minute, second)
+            }
+            [min_str, sec_str, subsec_str] => {
+                let minute: i64 = min_str.parse().unwrap_or(0);
+                let sec: f64 = sec_str.parse().unwrap_or(0.0);
+                let subsec: f64 = subsec_str.parse().unwrap_or(0.0);
+                let scale = 10f64.powi(subsec_str.len() as i32);
+                let second: f64 = sec + subsec / scale;
+                (minute, second)
+            }
+            _ => return Err(()),
+        };
 
         // 解析歌词
         let lyric_str = line_parts[1].trim().to_string();
@@ -78,12 +87,12 @@ pub(crate) fn parse_lyrics(lyric_string: String) -> Vec<LyricLine> {
 pub fn merge_lyrics(mut lyrics: Vec<LyricLine>, tlyrics: Vec<LyricLine>) -> Vec<LyricLine> {
     let mut j = 0;
 
-    for i in 0..lyrics.len() {
-        while j < tlyrics.len() && tlyrics[j].time < lyrics[i].time {
+    for l in lyrics.iter_mut() {
+        while j < tlyrics.len() && tlyrics[j].time < l.time {
             j += 1;
         }
-        if j < tlyrics.len() && tlyrics[j].time == lyrics[i].time {
-            lyrics[i].tlyric = Some(tlyrics[j].lyric.clone());
+        if j < tlyrics.len() && tlyrics[j].time == l.time {
+            l.tlyric = Some(tlyrics[j].lyric.clone());
         }
     }
 
@@ -94,7 +103,7 @@ pub(crate) fn parse_netease_lyrics(
     lyric_lines: Vec<String>,
     tlyric_lines: Vec<String>,
 ) -> Vec<LyricLine> {
-    if tlyric_lines.len() > 0 {
+    if !tlyric_lines.is_empty() {
         let lyrics = parse_lyrics(lyric_lines.join("\n"));
         let tlyrics = parse_lyrics(tlyric_lines.join("\n"));
         merge_lyrics(lyrics, tlyrics)
