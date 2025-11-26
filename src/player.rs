@@ -6,6 +6,7 @@ use crate::config::SharedConfig;
 use crate::lyric_parser::{
     LyricLine,
 };
+use crate::timer::MprisTimer;
 
 struct MprisInfo {
     url: String,
@@ -68,10 +69,9 @@ pub async fn mpris_loop(
             cache.player_running = true;
 
             let mut idx = 0;
-            let mut last_time: u128 = 0;
-            // 这个变量是循环上一次运行时的时间，用于判断进度条是否往左拉了
             let mut lyric: Vec<LyricLine> = Vec::new();
             let mut tlyric_mode;
+            let mut timer = MprisTimer::new();
 
             loop {
                 // 主循环，此时 player 已被移动到此大括号中
@@ -150,7 +150,7 @@ pub async fn mpris_loop(
                                             // 解析歌词并且存入 lyric
                                             cache.is_lyric = true;
                                             idx = 0;
-                                            last_time = 0;
+                                            timer.reset();
                                             break;
                                         } else if !try_next {
                                             // 无法获取歌词，但是不需要尝试下一个 provider
@@ -174,14 +174,41 @@ pub async fn mpris_loop(
                         break;
                     }
                 }
+
+                // 更新播放状态、倍率和当前 mpris 进度
+                let status = player.get_playback_status().unwrap_or(mpris::PlaybackStatus::Stopped);
+                let playback_rate = player.get_playback_rate().unwrap_or(1.0);
+                let position_micros = player.get_position().ok().map(|p| p.as_micros());
+
+                // 上一次用于匹配歌词的时间（进度）
+                let last_effective_time: u128 = timer.last_effective_time();
+
+                // 使用计时器计算当前有效进度
+                let current_time = timer.update(status, playback_rate, position_micros);
+
+                let rate = if playback_rate <= 0.0 { 1.0 } else { playback_rate };
+                let sleep_ms = ((100.0 / f64::max(rate, 1.0)) / 2.0) as u64;
+
+                if status == mpris::PlaybackStatus::Stopped {
+                    // 播放器停止：重置本地状态并清空前端显示
+                    idx = 0;
+                    lyric.clear();
+                    timer.reset();
+                    tx
+                        .send(ChannelMessage::UpdateMusicInfo(
+                            "".to_string(),
+                            "".to_string(),
+                        ))
+                        .unwrap();
+
+                    sleep(Duration::from_millis(sleep_ms)).await;
+                    continue;
+                }
+
                 // 歌词是否变化？
-
-                // 获取当前时间
                 if cache.is_lyric {
-                    let current_time = player.get_position().unwrap_or_default().as_micros();
-
-                    if current_time < last_time {
-                        // 进度条往左拉了，重置 idx
+                    // 如果进度比上一次小，重算 idx
+                    if current_time < last_effective_time {
                         idx = 0;
                         while idx < lyric.len() && current_time >= lyric[idx].time {
                             idx += 1;
@@ -217,10 +244,9 @@ pub async fn mpris_loop(
                         }
                     }
 
-                    last_time = current_time;
                 }
 
-                sleep(Duration::from_millis(100)).await;
+                sleep(Duration::from_millis(sleep_ms)).await;
             }
         }
         tokio::time::sleep(Duration::from_secs(1)).await;

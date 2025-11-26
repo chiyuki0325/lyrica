@@ -4,6 +4,7 @@ mod player;
 mod config;
 mod web_routes;
 mod lyric_providers;
+mod timer;
 
 use actix_web::{web, App, HttpServer};
 use tokio::sync::broadcast;
