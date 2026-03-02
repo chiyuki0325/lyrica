@@ -69,6 +69,7 @@ pub async fn mpris_loop(
             cache.player_running = true;
 
             let mut idx = 0;
+            let mut last_send_idx = None;
             let mut lyric: Vec<LyricLine> = Vec::new();
             let mut tlyric_mode;
             let mut timer = MprisTimer::new();
@@ -150,6 +151,7 @@ pub async fn mpris_loop(
                                             // 解析歌词并且存入 lyric
                                             cache.is_lyric = true;
                                             idx = 0;
+                                            last_send_idx = None;
                                             timer.reset();
                                             break;
                                         } else if !try_next {
@@ -192,6 +194,7 @@ pub async fn mpris_loop(
                 if status == mpris::PlaybackStatus::Stopped {
                     // 播放器停止：重置本地状态并清空前端显示
                     idx = 0;
+                    last_send_idx = None;
                     lyric.clear();
                     timer.reset();
                     tx
@@ -210,6 +213,7 @@ pub async fn mpris_loop(
                     // 如果进度比上一次小：重置 idx（回退时从头开始匹配）
                     if current_time < last_effective_time {
                         idx = 0;
+                        last_send_idx = None;
                     }
                     if let Some(last_line) = lyric.get(idx) {
                         if current_time >= last_line.time {
@@ -227,26 +231,28 @@ pub async fn mpris_loop(
                                     .partition_point(|line| line.time <= current_time);
                                 idx += offset;
                             }
-                            let line = &lyric[idx];
-                            let line_lyric = if line.tlyric.is_some() {
-                                // 有翻译
-                                let tlyric_clone = line.tlyric.clone().unwrap();
-                                if tlyric_clone.is_empty() || tlyric_clone == line.lyric {
-                                    line.lyric.clone()
-                                } else {
-                                    match tlyric_mode {
-                                        1 => tlyric_clone,
-                                        2 => format!("{} | {}", line.lyric, tlyric_clone),
-                                        3 => format!("{} | {}", tlyric_clone, line.lyric),
-                                        _ => line.lyric.clone(),  // 0
+                            if last_send_idx != Some(idx) {
+                                let line = &lyric[idx];
+                                let line_lyric = if line.tlyric.is_some() {
+                                    // 有翻译
+                                    let tlyric_clone = line.tlyric.clone().unwrap();
+                                    if tlyric_clone.is_empty() || tlyric_clone == line.lyric {
+                                        line.lyric.clone()
+                                    } else {
+                                        match tlyric_mode {
+                                            1 => tlyric_clone,
+                                            2 => format!("{} | {}", line.lyric, tlyric_clone),
+                                            3 => format!("{} | {}", tlyric_clone, line.lyric),
+                                            _ => line.lyric.clone(),  // 0
+                                        }
                                     }
-                                }
-                            } else {
-                                // 没有翻译
-                                line.lyric.clone()
-                            };
-
-                            tx.send(ChannelMessage::UpdateLyricLine(line.time, line_lyric)).unwrap();
+                                } else {
+                                    // 没有翻译
+                                    line.lyric.clone()
+                                };
+                                tx.send(ChannelMessage::UpdateLyricLine(line.time, line_lyric)).unwrap();
+                                last_send_idx = Some(idx);
+                            }
                         }
                     }
 
