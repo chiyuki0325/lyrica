@@ -207,15 +207,25 @@ pub async fn mpris_loop(
 
                 // 歌词是否变化？
                 if cache.is_lyric {
-                    // 如果进度比上一次小，重置 idx
+                    // 如果进度比上一次小：重置 idx（回退时从头开始匹配）
                     if current_time < last_effective_time {
                         idx = 0;
                     }
                     if let Some(last_line) = lyric.get(idx) {
                         if current_time >= last_line.time {
-                            // 歌词变化
-                            while idx < lyric.len() - 1 && current_time >= lyric[idx + 1].time {
+                            // 时间推进：先最多线性推进 3 次；若仍未追上，认为可能快进，对剩余区间二分
+                            let mut advanced = 0;
+                            while idx < lyric.len() - 1
+                                && current_time >= lyric[idx + 1].time
+                                && advanced < 3
+                            {
                                 idx += 1;
+                                advanced += 1;
+                            }
+                            if idx < lyric.len() - 1 && current_time >= lyric[idx + 1].time {
+                                let offset = lyric[idx + 1..lyric.len()]
+                                    .partition_point(|line| line.time <= current_time);
+                                idx += offset;
                             }
                             let line = &lyric[idx];
                             let line_lyric = if line.tlyric.is_some() {
