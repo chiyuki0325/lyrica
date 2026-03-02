@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts 1.12
 import org.kde.kirigami as Kirigami
+import org.kde.kquickcontrols as KQuickControls
 
 Kirigami.FormLayout {
     id: page
@@ -11,6 +12,8 @@ Kirigami.FormLayout {
     property alias cfg_configuredFontSize: configuredFontSize.text
     property alias cfg_layoutHeight: layoutHeight.text
     property alias cfg_showReconnectingText: showReconnectingText.checked
+    property alias cfg_shouldUseDefaultThemeTextColor: shouldUseDefaultThemeTextColor.checked
+    property alias cfg_configuredTextColor: configuredTextColor.color
 
     TextField {
         id: characterLimit
@@ -41,6 +44,18 @@ Kirigami.FormLayout {
     CheckBox {
         id: showReconnectingText
         text: i18n("Show [Reconnecting...] text when connection lost")
+    }
+
+    CheckBox {
+        id: shouldUseDefaultThemeTextColor
+        text: i18n("Use theme default text color")
+    }
+
+    KQuickControls.ColorButton {
+        id: configuredTextColor
+        Kirigami.FormData.label: i18n("Custom text color:")
+        enabled: !shouldUseDefaultThemeTextColor.checked
+        showAlphaChannel: false
     }
 
 }

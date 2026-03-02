@@ -21,6 +21,12 @@
         <entry name="showReconnectingText" type="Bool">
             <default>true</default>
         </entry>
+        <entry name="shouldUseDefaultThemeTextColor" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="configuredTextColor" type="Color">
+            <default>#ffffff</default>
+        </entry>
 
     </group>
     <group name="Backend">
