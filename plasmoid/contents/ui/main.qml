@@ -124,7 +124,9 @@ PlasmoidItem {
             height: plasmoid.configuration.layoutHeight
             verticalAlignment: Text.AlignVCenter
             font.pixelSize: fontSize
-            color: PlasmaCore.Theme.textColor
+            color: plasmoid.configuration.shouldUseDefaultThemeTextColor
+                 ? PlasmaCore.Theme.textColor
+                 : plasmoid.configuration.configuredTextColor
         }
 
         Plasmoid.contextualActions: [
