@@ -31,7 +31,7 @@ impl NeteaseLyricProvider {
             .expect("初始化网络请求失败!");
         let ncm_api = ncm_api::MusicApi::from_client(client);
         let title = metadata.title().unwrap_or_default().to_string();
-        let artist = metadata.artists().unwrap_or_default().get(0).unwrap_or(&"").to_string();
+        let artist = metadata.artists().unwrap_or_default().first().unwrap_or(&"").to_string();
         let search_result = ncm_api.search(
             match _config.online_search_pattern {
                 0 => title + " " + &artist,

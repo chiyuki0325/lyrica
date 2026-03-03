@@ -1,6 +1,7 @@
 use url::Url;
 use std::path::Path;
 use id3::Tag as ID3Tag;
+use id3::frame::{SynchronisedLyricsType, TimestampFormat};
 use crate::lyric_parser::{
     LyricLine,
     parse_lyrics,
@@ -48,11 +49,7 @@ impl FileLyricProvider {
     }
 
     pub fn is_available(&self, music_url: &str) -> bool {
-        if music_url.starts_with("file://") {
-            true
-        } else {
-            false
-        }
+        music_url.starts_with("file://")
     }
 }
 
@@ -103,10 +100,89 @@ impl FileLyricProvider {
 
     fn read_id3_tag_lyric(path: &str) -> Result<String, String> {
         let tag = ID3Tag::read_from_path(path).map_err(|e| format!("Failed to read tag: {}", e))?;
-        for lyric_tag in tag.lyrics() {
-            return Ok(lyric_tag.text.clone());
+
+        let mut candidates = tag.synchronised_lyrics().collect::<Vec<_>>();
+        if candidates.is_empty() {
+            return Err("Synchronised lyrics tag not found".to_string());
         }
-        Err("Lyric tag not found".to_string())
+
+        candidates.sort_by_key(|s| {
+            let ts_score = match s.timestamp_format {
+                TimestampFormat::Ms => 0,
+                TimestampFormat::Mpeg => 1,
+            };
+            let type_score = match s.content_type {
+                SynchronisedLyricsType::Lyrics => 0,
+                _ => 1,
+            };
+            (ts_score, type_score)
+        });
+
+        let selected = candidates[0];
+        if selected.timestamp_format != TimestampFormat::Ms {
+            return Err("Synchronised lyrics timestamp format is MPEG frames; cannot convert to LRC without audio timing info".to_string());
+        }
+
+        let mut content = selected.content.clone();
+        content.sort_by_key(|(t, _)| *t);
+
+        let mut out = String::new();
+
+        let mut current_ms: Option<u32> = None;
+        let mut current_text = String::new();
+
+        let flush = |ms: u32, text: &mut String, out: &mut String| {
+            let line = text.trim();
+            if line.is_empty() {
+                text.clear();
+                return;
+            }
+            let timestamp = Self::format_lrc_timestamp_ms(ms);
+            out.push_str(&timestamp);
+            out.push_str(line);
+            out.push('\n');
+            text.clear();
+        };
+
+        for (ms, text) in content {
+            if let Some(prev_ms) = current_ms {
+                if ms != prev_ms {
+                    flush(prev_ms, &mut current_text, &mut out);
+                }
+            }
+
+            current_ms = Some(ms);
+
+            let normalized = text.replace("\r\n", "\n").replace('\r', "\n");
+            let merged_segment = normalized
+                .split('\n')
+                .map(|l| l.trim())
+                .filter(|l| !l.is_empty())
+                .collect::<Vec<_>>()
+                .join(" ");
+            if merged_segment.is_empty() {
+                continue;
+            }
+            current_text.push_str(&merged_segment);
+        }
+
+        if let Some(last_ms) = current_ms {
+            flush(last_ms, &mut current_text, &mut out);
+        }
+
+        if out.is_empty() {
+            Err("Synchronised lyrics tag is empty".to_string())
+        } else {
+            Ok(out)
+        }
+    }
+
+    fn format_lrc_timestamp_ms(total_ms: u32) -> String {
+        let total_seconds = total_ms / 1000;
+        let minutes = total_seconds / 60;
+        let seconds = total_seconds % 60;
+        let centiseconds = (total_ms % 1000) / 10;
+        format!("[{:02}:{:02}.{:02}]", minutes, seconds, centiseconds)
     }
 
     fn read_flac_tag_lyric(path: &str) -> Result<String, String> {

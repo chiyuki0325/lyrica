@@ -16,11 +16,7 @@ pub(crate) async fn update_config(
     let mut config = config.write().await;
     *config = config_req.0;
     // check if lyric_search_folder exists
-    config.alt_folder_exists = if tokio::fs::metadata(&config.lyric_search_folder).await.is_err() {
-        false
-    } else {
-        true
-    };
+    config.alt_folder_exists = tokio::fs::metadata(&config.lyric_search_folder).await.is_ok();
     HttpResponse::Ok()
         .content_type("application/json")
         .body(r#"{"status": "ok"}"#)

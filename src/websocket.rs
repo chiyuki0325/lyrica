@@ -32,6 +32,7 @@ pub(crate) struct UpdateMusicInfoPacket {
     artist: String,
 }
 
+#[allow(dead_code)]
 pub(crate) struct LyricaSocket {
     rx: broadcast::Receiver<ChannelMessage>,
     config: SharedConfig,
