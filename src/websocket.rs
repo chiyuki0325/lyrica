@@ -1,40 +1,32 @@
-use actix::{Actor, AsyncContext, StreamHandler, Handler};
-use actix_web::{web, HttpRequest, HttpResponse, Error};
+use crate::config::Config;
+use crate::messages::*;
+use actix::{Actor, AsyncContext, Handler, StreamHandler};
+use actix_web::{Error, HttpRequest, HttpResponse, web};
 use actix_web_actors::ws;
-use tokio::sync::broadcast;
 use serde::Serialize;
-
-use crate::ChannelMessage;
-use crate::config::SharedConfig;
+use std::sync::Arc;
+use tokio::sync::{RwLock, broadcast};
 
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct WebSocketPacket {
     pub id: u8,
-    pub data: WebSocketPacketData,
+    pub data: ChannelMessage,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub(crate) enum WebSocketPacketData {
-    LyricLine(UpdateLyricLinePacket),
-    MusicInfo(UpdateMusicInfoPacket),
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub(crate) struct UpdateLyricLinePacket {
-    lyric: String,
-    time: u128,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub(crate) struct UpdateMusicInfoPacket {
-    title: String,
-    artist: String,
+impl From<ChannelMessage> for WebSocketPacket {
+    fn from(msg: ChannelMessage) -> Self {
+        let id = match msg {
+            ChannelMessage::UpdateLyricLine(_) => 0,
+            ChannelMessage::UpdateMusicInfo(_) => 1,
+            ChannelMessage::UpdateConfig(_) => 2,
+        };
+        WebSocketPacket { id, data: msg }
+    }
 }
 
 pub(crate) struct LyricaSocket {
     rx: broadcast::Receiver<ChannelMessage>,
-    config: SharedConfig,
+    config: Arc<RwLock<Config>>,
 }
 
 impl Actor for LyricaSocket {
@@ -45,11 +37,7 @@ impl Actor for LyricaSocket {
         let mut rx = self.rx.resubscribe();
         let ctx_address = ctx.address();
 
-
-        ctx_address.do_send(ChannelMessage::UpdateMusicInfo(
-            String::new(),
-            String::new(),
-        ));
+        // TODO: Send current music information and lyric line when a new client connects
 
         let fut = async move {
             while let Ok(msg) = rx.recv().await {
@@ -68,37 +56,17 @@ impl Handler<ChannelMessage> for LyricaSocket {
     type Result = ();
 
     fn handle(&mut self, msg: ChannelMessage, ctx: &mut Self::Context) {
-        match msg {
-            ChannelMessage::UpdateLyricLine(time, lyric) => {
-                /*
-                if self.config.read().await.verbose {
-                    println!("[{time}] {lyric}");
-                }
-                 */
+        // convert message to WebSocketPacket and send to client
 
-                let packet = WebSocketPacket {
-                    id: 1,
-                    data: WebSocketPacketData::LyricLine(UpdateLyricLinePacket {
-                        lyric, time,
-                    }),
-                };
-                ctx.text(serde_json::to_string(&packet).unwrap());
-            }
-            ChannelMessage::UpdateMusicInfo(title, artist) => {
-                /*
-                if self.config.read().unwrap().verbose {
-                    println!("[{title} - {artist}]");
-                }
-                 */
+        if self.config.blocking_read().verbose {
+            println!("{}", &msg);
+        }
 
-                let packet = WebSocketPacket {
-                    id: 0,
-                    data: WebSocketPacketData::MusicInfo(UpdateMusicInfoPacket {
-                        title, artist,
-                    }),
-                };
-                ctx.text(serde_json::to_string(&packet).unwrap());
-            }
+        let packet = WebSocketPacket::from(msg);
+        if let Ok(text) = serde_json::to_string(&packet) {
+            ctx.text(text);
+        } else {
+            eprintln!("Failed to serialize WebSocketPacket");
         }
     }
 }
@@ -119,10 +87,14 @@ pub(crate) async fn ws_index(
     req: HttpRequest,
     stream: web::Payload,
     tx: web::Data<broadcast::Sender<ChannelMessage>>,
-    config: web::Data<SharedConfig>,
+    config: web::Data<RwLock<Config>>,
 ) -> Result<HttpResponse, Error> {
-    ws::start(LyricaSocket {
-        rx: tx.subscribe(),
-        config: config.get_ref().clone(),
-    }, &req, stream)
+    ws::start(
+        LyricaSocket {
+            rx: tx.subscribe(),
+            config: config.into_inner(),
+        },
+        &req,
+        stream,
+    )
 }

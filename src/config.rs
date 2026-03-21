@@ -1,52 +1,35 @@
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::RwLock;
 
-// source: https://stackoverflow.com/questions/53866508
-macro_rules! pub_struct {
-    ($name:ident {$($field:ident: $t:ty,)*}) => {
-        #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)] // ewww
-        pub struct $name {
-            $(pub $field: $t),*
-        }
-    }
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Config {
+    pub verbose: bool,
+    pub disabled_players: Vec<String>,
+    pub enabled_lyric_providers: Vec<usize>,
+    pub online_search_pattern: u8,
+    pub disabled_folders: Vec<String>,
+    pub online_search_timeout: u64,
+    pub online_search_retry: bool,
+    pub online_search_max_retries: u8,
+    pub lyric_search_folder: String,
 }
 
-pub_struct!(Config {
-    verbose: bool,
-    tlyric_mode: u8,
-    disabled_players: Vec<String>,
-    enabled_lyric_providers: Vec<usize>,
-    online_search_pattern: u8,
-    disabled_folders: Vec<String>,
-    online_search_timeout: u64,
-    online_search_retry: bool,
-    max_retries: u8,
-    lyric_search_folder: String,
-    alt_folder_exists: bool,
-});
-
-pub type SharedConfig = Arc<RwLock<Config>>;
-
-pub fn initialize_config() -> SharedConfig {
-    let config = Config {
-        verbose: true,
-        tlyric_mode: 1,
-        // 0: always use original lyric
-        // 1: show tlyric instead of lyric if available
-        // 2: Lyric | TLyric
-        // 3: TLyric | Lyric
-        disabled_players: vec![],
-        enabled_lyric_providers: vec![0, 1, 2, 3, 4, 5],
-        online_search_pattern: 0,
-        // 0: Title + Artist
-        // 1: Title only
-        disabled_folders: vec![],
-        online_search_timeout: 10,
-        online_search_retry: true,
-        max_retries: 3,
-        lyric_search_folder: "~/Music/lrc".to_string(),
-        alt_folder_exists: false,
-    };
-    Arc::new(RwLock::new(config))
+impl Config {
+    pub fn new() -> Self {
+        Self {
+            verbose: false,
+            disabled_players: "firefox,chromium,plasma-browser-integration,kdeconnect"
+                .split(',')
+                .map(|it| it.trim().to_string())
+                .collect(),
+            enabled_lyric_providers: vec![0, 1, 2, 3, 4, 5],
+            online_search_pattern: 0,
+            // 0: Title + Artist
+            // 1: Title only
+            disabled_folders: vec![],
+            online_search_timeout: 10,
+            online_search_retry: true,
+            online_search_max_retries: 3,
+            lyric_search_folder: "~/Music/lrc".to_string(),
+        }
+    }
 }

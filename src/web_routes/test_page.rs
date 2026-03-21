@@ -4,12 +4,12 @@ pub(crate) async fn test_page() -> impl Responder {
     HttpResponse::Ok()
         .append_header(("Content-Type", "text/html; charset=utf-8"))
         .body(
-        r#"
+            r#"
         <!DOCTYPE html>
         <html>
         <body>
         <script>
-            ws = new WebSocket("ws://localhost:15649/ws")
+            ws = new WebSocket("ws://localhost:PORT/ws")
             ws.onmessage = function(event) {
                 console.log(event.data)
             }
@@ -19,6 +19,7 @@ pub(crate) async fn test_page() -> impl Responder {
         </script>
         </body>
         </html>
-        "#,
-    )
+        "#
+            .replace("PORT", crate::PORT.to_string().as_str()),
+        )
 }

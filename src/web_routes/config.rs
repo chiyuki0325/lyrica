@@ -1,33 +1,36 @@
-use crate::config::{Config, SharedConfig};
-use actix_web::{web, HttpResponse};
+use crate::{config::Config, messages::ChannelMessage};
+use actix_web::{HttpResponse, web};
+use tokio::sync::{RwLock, broadcast};
 
 pub(crate) async fn update_config(
     config_req: web::Json<Config>,
-    config: web::Data<SharedConfig>,
+    config: web::Data<RwLock<Config>>,
+    tx: web::Data<broadcast::Sender<ChannelMessage>>,
 ) -> HttpResponse {
+    let new_config = config_req.into_inner();
+
     {
-        // acquire read lock
         if config.read().await.verbose {
-            println!("Updating config: {:?}", config_req.0);
+            println!("Updating config: {:?}", &new_config);
         }
-        // drop read lock
+        // read lock dropped here
     }
-    // acquire write lock
+
     let mut config = config.write().await;
-    *config = config_req.0;
-    // check if lyric_search_folder exists
-    config.alt_folder_exists = if tokio::fs::metadata(&config.lyric_search_folder).await.is_err() {
-        false
-    } else {
-        true
-    };
+    *config = new_config.clone();
+
+    // Send the updated config to all connected clients
+    let channel_message = ChannelMessage::UpdateConfig(new_config);
+    if let Err(e) = tx.send(channel_message) {
+        eprintln!("Failed to send config update: {}", e);
+    }
+
     HttpResponse::Ok()
         .content_type("application/json")
         .body(r#"{"status": "ok"}"#)
-    // all locks dropped now
 }
 
-pub(crate) async fn get_config(config: web::Data<SharedConfig>) -> HttpResponse {
+pub(crate) async fn get_config(config: web::Data<RwLock<Config>>) -> HttpResponse {
     let config = config.read().await;
     HttpResponse::Ok().json(&*config)
 }
