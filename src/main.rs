@@ -1,5 +1,5 @@
 mod websocket;
-// mod lyric_parser;
+mod lyric_parser;
 mod config;
 mod player;
 mod web_routes;
