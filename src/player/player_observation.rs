@@ -1,5 +1,9 @@
 use futures_util::stream::StreamExt;
+use std::collections::HashMap;
+use zbus::zvariant::{Dict, OwnedValue};
 
+use crate::messages::{ChannelMessage, UpdateMusicInfoData};
+use crate::player::mpris_metadata::Metadata;
 use crate::player::{MPRIS_PREFIX, MprisListener, dbus_proxies::*};
 
 impl MprisListener {
@@ -11,22 +15,66 @@ impl MprisListener {
             }
         }
 
-        // TODO: get properties first, then listen for changes, to avoid missing any changes between these two steps
-
+        // get properties first, then listen for changes
         let service = format!("{}{}", MPRIS_PREFIX, player_id);
+
+        let player_proxy = PlayerProxy::new(&self.conn, service.clone()).await?;
+        let metadata = player_proxy.metadata().await?;
+
+        let title = metadata.title().unwrap_or_default();
+        let artist = metadata.artist().unwrap_or_default();
+
+        if !(title.is_empty() && artist.is_empty()) {
+            self.tx
+                .send(ChannelMessage::UpdateMusicInfo(UpdateMusicInfoData {
+                    title,
+                    artist,
+                }))
+                .ok();
+        }
+
+        // start listening for property changes
         let player_properties_proxy = PlayerPropertiesProxy::new(&self.conn, service).await?;
         let mut properties_changed_stream =
             player_properties_proxy.receive_properties_changed().await?;
 
         while let Some(signal) = properties_changed_stream.next().await {
             let args = signal.args().expect("Error parsing message");
-            if self.config.read().await.verbose {
-                println!(
-                    "Received PropertiesChanged signal: interface={}, changed_properties={:?}, invalidated_properties={:?}",
-                    args.interface_name, args.changed_properties, args.invalidated_properties
-                );
-            }
+            self.dispatch_properties_changed(&args.interface_name, args.changed_properties)
+                .await;
         }
         Ok(())
+    }
+
+    async fn dispatch_properties_changed(
+        &self,
+        interface_name: &str,
+        changed_properties: HashMap<String, OwnedValue>,
+    ) {
+        if self.config.read().await.verbose {
+            println!(
+                "Properties changed for interface {}: {:?}",
+                interface_name, changed_properties
+            );
+        }
+
+        for (key, value) in changed_properties.into_iter() {
+            match key.as_str() {
+                "Metadata" => {
+                    if let Ok(metadata) = Metadata::try_from(value) {
+                        let title = metadata.title().unwrap_or_default();
+                        let artist = metadata.artist().unwrap_or_default();
+
+                        self.tx
+                            .send(ChannelMessage::UpdateMusicInfo(UpdateMusicInfoData {
+                                title,
+                                artist,
+                            }))
+                            .ok();
+                    }
+                }
+                _ => (),
+            }
+        }
     }
 }

@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use zbus::proxy;
 use zbus::zvariant::OwnedValue;
 
+use crate::player::mpris_metadata::Metadata;
+
 #[proxy(
     interface = "org.freedesktop.DBus",
     default_service = "org.freedesktop.DBus",
@@ -26,4 +28,14 @@ pub(crate) trait PlayerProperties {
         changed_properties: HashMap<String, OwnedValue>,
         invalidated_properties: Vec<String>,
     ) -> zbus::Result<()>;
+}
+
+
+#[proxy(
+    interface = "org.mpris.MediaPlayer2.Player",
+    default_path = "/org/mpris/MediaPlayer2"
+)]
+pub(crate) trait Player {
+    #[zbus(property)]
+    fn metadata(&self) -> zbus::Result<Metadata>;
 }
