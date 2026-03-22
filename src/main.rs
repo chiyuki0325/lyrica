@@ -20,7 +20,9 @@ lazy_static! {
     // TODO: make this configurable in cmd args
 }
 
-#[tokio::main]
+
+// multithreaded runtime is too heavy so we use single-threaded runtime
+#[tokio::main(flavor = "current_thread")] 
 async fn main() -> std::io::Result<()> {
     let (tx, _rx) = broadcast::channel::<ChannelMessage>(6);
 

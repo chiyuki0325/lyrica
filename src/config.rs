@@ -16,7 +16,7 @@ pub struct Config {
 impl Config {
     pub fn new() -> Self {
         Self {
-            verbose: false,
+            verbose: true,
             disabled_players: "firefox,chromium,plasma-browser-integration,kdeconnect"
                 .split(',')
                 .map(|it| it.trim().to_string())

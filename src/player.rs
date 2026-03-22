@@ -4,24 +4,20 @@ use tokio::sync::RwLock;
 use zbus::Connection;
 
 pub(crate) mod dbus_proxies;
+pub(crate) mod mpris_loop;
 pub(crate) mod player_discovery;
+pub(crate) mod player_observation;
 
 pub(crate) const MPRIS_PREFIX: &str = "org.mpris.MediaPlayer2.";
 pub(crate) struct MprisListener {
     conn: Connection,
     config: Arc<RwLock<Config>>,
-    players: Vec<String>,
-    // stack of player names
 }
 
 impl MprisListener {
     pub(crate) async fn new(config: Arc<RwLock<Config>>) -> zbus::Result<Self> {
         let conn = Connection::session().await?;
-        Ok(Self {
-            conn,
-            config,
-            players: Vec::new(),
-        })
+        Ok(Self { conn, config })
     }
 }
 
@@ -38,6 +34,6 @@ pub(crate) async fn start_mpris_loop(config: Arc<RwLock<Config>>) {
 }
 
 async fn start_mpris_loop_once(config: Arc<RwLock<Config>>) -> zbus::Result<()> {
-    let mut listener = MprisListener::new(config).await?;
-    listener.start_discovery().await
+    let listener = MprisListener::new(config).await?;
+    listener.start_mpris_loop().await
 }
