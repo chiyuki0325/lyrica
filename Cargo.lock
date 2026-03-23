@@ -1286,6 +1286,7 @@ dependencies = [
  "actix",
  "actix-web",
  "actix-web-actors",
+ "async-trait",
  "futures-util",
  "id3",
  "isahc",

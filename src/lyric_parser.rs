@@ -1,11 +1,11 @@
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub(crate) struct Lyric {
     pub lines: Vec<LyricLine>,
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct LyricLine {
     pub time: u64, // in milliseconds
     pub text: String,

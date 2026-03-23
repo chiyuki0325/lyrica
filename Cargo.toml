@@ -18,3 +18,4 @@ metaflac = "0.2.8"
 isahc = { version = "1.7.2", features = ["json"] }
 zbus = "5.4.0"
 futures-util = "0.3.32"
+async-trait = "0.1.89"
