@@ -1,6 +1,6 @@
 use futures_util::stream::StreamExt;
 use std::collections::HashMap;
-use zbus::zvariant::{Dict, OwnedValue};
+use zbus::zvariant::OwnedValue;
 
 use crate::messages::{ChannelMessage, UpdateMusicInfoData};
 use crate::player::mpris_metadata::Metadata;
@@ -9,10 +9,9 @@ use crate::player::{MPRIS_PREFIX, MprisListener, dbus_proxies::*};
 impl MprisListener {
     pub(crate) async fn start_observation(&self, player_id: String) -> zbus::Result<()> {
         // start player observation on the player on top of the stack
-        {
-            if self.config.read().await.verbose {
-                println!("Starting observation for player: {}", player_id);
-            }
+        let is_verbose = self.config.read().await.verbose;
+        if is_verbose {
+            println!("Starting observation for player: {}", player_id);
         }
 
         // get properties first, then listen for changes
@@ -51,7 +50,8 @@ impl MprisListener {
         interface_name: &str,
         changed_properties: HashMap<String, OwnedValue>,
     ) {
-        if self.config.read().await.verbose {
+        let is_verbose = self.config.read().await.verbose;
+        if is_verbose {
             println!(
                 "Properties changed for interface {}: {:?}",
                 interface_name, changed_properties
