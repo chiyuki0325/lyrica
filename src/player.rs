@@ -9,6 +9,7 @@ pub(crate) mod mpris_loop;
 pub(crate) mod mpris_metadata;
 pub(crate) mod player_discovery;
 pub(crate) mod player_observation;
+pub(crate) mod lyric_session;
 
 pub(crate) const MPRIS_PREFIX: &str = "org.mpris.MediaPlayer2.";
 pub(crate) struct MprisListener {

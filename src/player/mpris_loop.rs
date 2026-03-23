@@ -15,7 +15,7 @@ impl MprisListener {
         tokio::spawn(async move { self_for_discovery.start_discovery(tx).await });
 
         let mut players = Vec::<String>::new();
-        let mut handle = Option::<JoinHandle<()>>::None;
+        let mut handle: Option<JoinHandle<()>> = Option::<JoinHandle<()>>::None;
 
         while let Some(event) = rx.recv().await {
             match event {
@@ -31,9 +31,10 @@ impl MprisListener {
 
             // restart observation if the player on top of the stack changes
             let player_on_top = players.last().cloned();
-            // println!("Players: {:?}, player on top: {:?}", players, player_on_top);
-            // println!("Handle: {:?}", handle);
+
+            // kill existing observation task
             handle.take().map(|h| h.abort());
+
             if let Some(player_id) = player_on_top {
                 let self_for_observation = this.clone();
                 handle = Some(tokio::spawn(async move {

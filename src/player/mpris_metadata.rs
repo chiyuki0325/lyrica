@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use zbus::zvariant::{Array, Dict, ObjectPath, OwnedValue};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Metadata(pub HashMap<String, OwnedValue>);
 
 impl Metadata {
@@ -63,6 +63,10 @@ impl Metadata {
 
     pub fn mpris_track_id(&self) -> Option<String> {
         self.get_object_path_as_string("mpris:trackid")
+    }
+
+    pub fn has_song_info(&self) -> bool {
+        self.xesam_title().is_some() && self.xesam_artist().is_some()
     }
 }
 

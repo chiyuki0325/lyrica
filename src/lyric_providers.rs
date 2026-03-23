@@ -34,7 +34,7 @@ lazy_static! {
     };
 }
 
-async fn try_get_lyric_from_providers(
+pub(crate) async fn try_get_lyric_from_providers(
     metadata: &Metadata,
     config: Arc<RwLock<Config>>,
 ) -> Option<Lyric> {
