@@ -3,7 +3,7 @@ mod lyric_parser;
 mod player;
 mod web_routes;
 mod websocket;
-// mod lyric_providers;
+mod lyric_providers;
 mod helpers;
 mod messages;
 mod state;
@@ -31,7 +31,7 @@ async fn main() -> std::io::Result<()> {
     let config = Config::new();
     let web_data_config = web::Data::new(RwLock::new(config));
 
-    let state = State::new();
+    let state = State::default();
     let web_data_state = web::Data::new(RwLock::new(state));
 
     // start mpris loop in background task
