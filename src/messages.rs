@@ -12,6 +12,20 @@ pub(crate) enum ChannelMessage {
     UpdateConfig(Config),
 }
 
+impl ChannelMessage {
+    pub(crate) fn update_lyric_line(time: u64, text: String, alt: Option<String>) -> Self {
+        ChannelMessage::UpdateLyricLine(UpdateLyricLineData { time, text, alt })
+    }
+
+    pub(crate) fn update_music_info(title: String, artist: String) -> Self {
+        ChannelMessage::UpdateMusicInfo(UpdateMusicInfoData { title, artist })
+    }
+
+    pub(crate) fn update_config(config: Config) -> Self {
+        ChannelMessage::UpdateConfig(config)
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub(crate) struct UpdateLyricLineData {
     pub time: u64,
