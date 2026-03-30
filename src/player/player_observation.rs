@@ -1,12 +1,11 @@
 use futures_util::stream::StreamExt;
 use std::collections::HashMap;
 use std::fmt;
-use std::sync::Arc;
 use tokio::sync::broadcast::{Sender, channel};
 use zbus::zvariant::OwnedValue;
 
 use crate::lyric_providers::try_get_lyric_from_providers;
-use crate::messages::{ChannelMessage, UpdateMusicInfoData};
+use crate::messages::ChannelMessage;
 use crate::player::lyric_session::SessionManager;
 use crate::player::mpris_metadata::Metadata;
 use crate::player::{MPRIS_PREFIX, MprisListener, dbus_proxies::*};
@@ -33,8 +32,20 @@ impl fmt::Display for PlaybackEvent {
 }
 
 impl MprisListener {
-    pub(crate) async fn start_observation(self: Arc<Self>, player_id: String) -> zbus::Result<()> {
-        let service_name: Arc<str> = format!("{}{}", MPRIS_PREFIX, player_id).into();
+    async fn player_proxy<'a>(&self, service_name: &'a str) -> zbus::Result<PlayerProxy<'a>> {
+        PlayerProxy::new(&self.conn, service_name).await
+    }
+
+    async fn player_properties_proxy<'a>(
+        &self,
+        service_name: &'a str,
+    ) -> zbus::Result<PlayerPropertiesProxy<'a>> {
+        PlayerPropertiesProxy::new(&self.conn, service_name).await
+    }
+
+    pub(crate) async fn start_observation<'a>(&self, player_id: String) -> zbus::Result<()> {
+        let service_name = format!("{}{}", MPRIS_PREFIX, player_id);
+        let player_proxy = self.player_proxy(&service_name).await?;
 
         // channel for playback events, received in lyric session
         let (pbtx, pbrx) = channel::<PlaybackEvent>(16);
@@ -48,53 +59,45 @@ impl MprisListener {
         .await;
 
         // try spawn lyric session if song is already playing
-        self.clone()
-            .bootstrap_lyric_session(&service_name, &mut ssmgr)
+        self.bootstrap_lyric_session(&service_name, &mut ssmgr)
             .await;
 
         // start listening for property changes
-        let listen_properties_handle = {
-            let this = self.clone();
-            let service_name = service_name.clone();
-            let pbtx1 = pbtx.clone();
-            this.start_listen_properties(service_name, ssmgr, pbtx1)
-        };
+        let pbtx1 = pbtx.clone();
+        let listen_properties_handle =
+            self.start_listen_properties(service_name.as_str(), ssmgr, pbtx1);
 
         // start listening for seeked signal
-        let listen_seeked_handle = {
-            let this = self.clone();
-            let service_name = service_name.clone();
-            let pbtx1 = pbtx.clone();
-            this.start_listen_seeked(service_name, pbtx1)
-        };
+        let pbtx2 = pbtx.clone();
+        let listen_seeked_handle = self.start_listen_seeked(service_name.as_str(), pbtx2);
+
+        drop(pbtx);
 
         tokio::try_join!(listen_properties_handle, listen_seeked_handle)
             .map(|_| ())
             .map_err(|_| zbus::Error::Failure(String::from("Player exited")))
     }
 
-    async fn start_listen_properties(
-        self: Arc<Self>,
-        service_name: Arc<str>,
+    async fn start_listen_properties<'a>(
+        &self,
+        service_name: &str,
         mut ssmgr: SessionManager,
         pbtx: Sender<PlaybackEvent>,
     ) -> zbus::Result<()> {
-        let service_name = service_name.as_ref();
-        let player_properties_proxy = PlayerPropertiesProxy::new(&self.conn, service_name).await?;
+        let player_properties_proxy = self.player_properties_proxy(service_name).await?;
         let mut properties_stream = player_properties_proxy.receive_properties_changed().await?;
 
         while let Some(signal) = properties_stream.next().await {
             let args = signal.args().expect("Error parsing message");
             for event in self
-                .dispatch_properties(args.changed_properties, service_name)
+                .dispatch_properties(service_name, args.changed_properties)
                 .await
                 .into_iter()
             {
                 match event {
                     PlaybackEvent::Reset() => {
                         // if song changed, restart lyric session
-                        self.clone()
-                            .bootstrap_lyric_session(service_name, &mut ssmgr)
+                        self.bootstrap_lyric_session(&service_name, &mut ssmgr)
                             .await;
                     }
                     _ => {
@@ -107,13 +110,12 @@ impl MprisListener {
         Ok(())
     }
 
-    async fn start_listen_seeked(
-        self: Arc<Self>,
-        service_name: Arc<str>,
+    async fn start_listen_seeked<'a>(
+        &self,
+        service_name: &str,
         pbtx: Sender<PlaybackEvent>,
     ) -> zbus::Result<()> {
-        let service_name = service_name.as_ref();
-        let player_proxy = PlayerProxy::new(&self.conn, service_name).await?;
+        let player_proxy = self.player_proxy(service_name).await?;
         let mut seeked_stream = player_proxy.receive_seeked().await?;
 
         while let Some(signal) = seeked_stream.next().await {
@@ -125,12 +127,12 @@ impl MprisListener {
         Ok(())
     }
 
-    async fn bootstrap_lyric_session(
-        self: Arc<Self>,
+    async fn bootstrap_lyric_session<'a>(
+        &self,
         service_name: &str,
         ssmgr: &mut SessionManager,
     ) -> Option<()> {
-        let player_proxy = PlayerProxy::new(&self.conn, service_name).await.ok()?;
+        let player_proxy = self.player_proxy(service_name).await.ok()?;
         let metadata = player_proxy.metadata().await.ok()?;
         let playback_status = player_proxy.playback_status().await.ok()?;
         let rate = player_proxy.rate().await.ok().unwrap_or(1.0);
@@ -171,10 +173,10 @@ impl MprisListener {
             .ok();
     }
 
-    async fn dispatch_properties(
+    async fn dispatch_properties<'a>(
         &self,
+        service_name: &'a str,
         changed_properties: HashMap<String, OwnedValue>,
-        service_name: &str,
     ) -> Vec<PlaybackEvent> {
         let mut events = Vec::new();
 
@@ -189,6 +191,13 @@ impl MprisListener {
                 "Rate" => {
                     if let Ok(rate) = value.downcast_ref::<f64>() {
                         events.push(PlaybackEvent::RateChange(rate));
+
+                        // push latest time when rate changed to trigger re-anchor
+                        let player_proxy = self.player_proxy(service_name).await;
+                        if let Ok(proxy) = player_proxy {
+                            let position = proxy.position().await.ok().unwrap_or(0);
+                            events.push(PlaybackEvent::Seek((position / 1000) as u64));
+                        }
                     }
                 }
                 "PlaybackStatus" => {
@@ -200,14 +209,16 @@ impl MprisListener {
                             _ => continue,
                         });
                         // push latest time when pause/play
-                        if let Ok(player_proxy) = PlayerProxy::new(&self.conn, service_name).await {
-                            let position = player_proxy.position().await.ok().unwrap_or(0);
-                            println!("Dispatching PlaybackStatus change, current position: {} ms", position);
+                        let player_proxy = self.player_proxy(service_name).await;
+                        if let Ok(proxy) = player_proxy {
+                            let position = proxy.position().await.ok().unwrap_or(0);
                             events.push(PlaybackEvent::Seek((position / 1000) as u64));
                         }
                     }
                 }
-                _ => continue,
+                _ => {
+                    println!("Other property changed: {} = {:?}", key, value);
+                }
             }
         }
 

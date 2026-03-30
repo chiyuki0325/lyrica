@@ -64,16 +64,12 @@ impl SessionManager {
         msgtx: Sender<ChannelMessage>,
         mut pbrx: Receiver<PlaybackEvent>,
     ) {
-        /*
-        // TODO
-        while let Ok(event) = rx.recv().await {
-            println!("Received playback event in lyric session: {:?}", event);
-        }
-        */
+        let mut anchor_realworld_time = Instant::now();
+        let mut anchor_music_time = 0;
 
-        let mut start_time = Instant::now();
         let lyric_lines = lyric.lines.len();
         let mut position = 0;
+        let mut rate = 1.0;
         let mut paused = false;
 
         if lyric_lines == 0 {
@@ -84,7 +80,10 @@ impl SessionManager {
             let timer = async {
                 if !paused && position < lyric_lines {
                     let target_time = lyric.lines[position].time;
-                    let target_instant = start_time + Duration::from_millis(target_time);
+                    let target_millis_after_anchor =
+                        ((target_time - anchor_music_time) as f64 * rate) as u64;
+                    let target_instant =
+                        anchor_realworld_time + Duration::from_millis(target_millis_after_anchor);
                     sleep_until(target_instant).await;
                 } else {
                     pending::<()>().await;
@@ -111,17 +110,29 @@ impl SessionManager {
                         println!("{}", event.as_ref().map(|e| e.to_string()).unwrap_or_default());
                     }
                     match event {
-                        Ok(PlaybackEvent::Seek(new_position)) => {
-                            // Adjust start_time based on the new position
-                            start_time = Instant::now() - Duration::from_millis(new_position);
-                            position = lyric.lines.iter().position(|line| line.time > new_position).unwrap_or(lyric_lines);
+                        Ok(PlaybackEvent::Seek(new_time)) => {
+                            // Adjust anchor time based on new position
 
-                            let line = &lyric.lines[position.saturating_sub(1)];
-                            msgtx.send(ChannelMessage::update_lyric_line(
-                                line.time,
-                                line.text.clone(),
-                                line.alt.clone(),
-                            )).ok();
+                            anchor_music_time = new_time;
+                            anchor_realworld_time = Instant::now();
+
+                            position = lyric.lines.iter().position(|line| line.time > new_time).unwrap_or(lyric_lines);
+
+                            // fix: before first line
+                            if position == 0 {
+                                msgtx.send(ChannelMessage::update_lyric_line(
+                                    0,
+                                    String::new(),
+                                    None,
+                                )).ok();
+                            } else {
+                                let line = &lyric.lines[position.saturating_sub(1)];
+                                msgtx.send(ChannelMessage::update_lyric_line(
+                                    line.time,
+                                    line.text.clone(),
+                                    line.alt.clone(),
+                                )).ok();
+                            }
                         }
                         Ok(PlaybackEvent::Pause) => {
                             paused = true;
@@ -131,8 +142,12 @@ impl SessionManager {
                             // a Seeked event will be triggered immediately after Play
                             // so we don't need to adjust position here
                         }
-                        Ok(_) => {
-                            // TODO: Pause Play
+                        Ok(PlaybackEvent::RateChange(new_rate)) => {
+                            rate = new_rate;
+                        }
+                        Ok(PlaybackEvent::Reset()) => {
+                            // lyric session will be quit, so do nothing here
+                            break;
                         }
                         Err(_) => {
                             break;

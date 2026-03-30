@@ -33,7 +33,7 @@ impl MprisListener {
             let player_on_top = players.last().cloned();
 
             // kill existing observation task
-            handle.take().map(|h| h.abort());
+            handle.take().map(|h: JoinHandle<()>| h.abort());
 
             if let Some(player_id) = player_on_top {
                 let self_for_observation = this.clone();
