@@ -18,6 +18,7 @@ use crate::lyric_providers::mpris2_text::Mpris2TextLyricProvider;
 use crate::lyric_providers::netease::NeteaseLyricProvider;
 use crate::lyric_providers::netease_trackid::NeteaseTrackIDLyricProvider;
 use crate::lyric_providers::yesplaymusic::YesPlayMusicLyricProvider;
+use crate::helpers::StringVecExt;
 
 pub(crate) mod feeluown_netease;
 pub(crate) mod file;
@@ -62,7 +63,7 @@ trait LyricProvider: Send + Sync {
 
     fn get_name(&self) -> &'static str {
         let full_name = type_name::<Self>();
-        full_name.split("::").last().unwrap_or(full_name)
+        full_name.split("::").last().unwrap_or(full_name).trim_end_matches("LyricProvider")
     }
 }
 
@@ -86,8 +87,13 @@ pub(crate) async fn try_get_lyric_from_providers(
     metadata: &Metadata,
     config: Arc<RwLock<Config>>,
 ) -> Option<Lyric> {
+    let enabled_providers = config.read().await.enabled_lyric_providers.clone();
     for provider in LYRIC_PROVIDERS.iter() {
-        info!("Trying lyric provider: {}", provider.get_name());
+        let name = provider.get_name();
+        if !enabled_providers.contains(name) {
+            continue;
+        }
+        info!("Trying lyric provider: {}", name);
         match provider.get_lyric(metadata, config.clone()).await {
             Ok(lyric) => return Some(lyric),
             Err(LyricProviderError::Aborted) => return None,

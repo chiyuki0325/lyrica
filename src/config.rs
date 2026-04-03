@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub disabled_players: Vec<String>,
-    pub enabled_lyric_providers: Vec<usize>,
+    pub enabled_lyric_providers: Vec<String>,
     pub online_search_pattern: u8,
     pub disabled_folders: Vec<String>,
     pub online_search_timeout_secs: u64,
@@ -19,7 +19,10 @@ impl Config {
                 .split(',')
                 .map(|it| it.trim().to_string())
                 .collect(),
-            enabled_lyric_providers: vec![0, 1, 2, 3, 4, 5],
+            enabled_lyric_providers: "Mpris2Text,File,YesPlayMusic,NeteaseTrackID,FeelUOwnNetease,Netease"
+                .split(',')
+                .map(|it| it.trim().to_string())
+                .collect(),
             online_search_pattern: 0,
             // 0: Title + Artist
             // 1: Title only
