@@ -22,19 +22,19 @@ Kirigami.FormLayout {
         textRole: 'label'
         model: [
             {
-                'label': i18n('Show original lyric only'),
+                'label': i18n("Show original lyric only"),
                 'value': 0
             },
             {
-                'label': i18n('Show translation only'),
+                'label': i18n("Show translation only"),
                 'value': 1
             },
             {
-                'label': i18n('Original lyric | Translation'),
+                'label': i18n("Original lyric | Translation"),
                 'value': 2
             },
             {
-                'label': i18n('Translation | Original lyric'),
+                'label': i18n("Translation | Original lyric"),
                 'value': 3
             }
         ]
@@ -54,7 +54,7 @@ Kirigami.FormLayout {
     TextField {
         id: characterLimit
         Kirigami.FormData.label: i18n("Character Limit:")
-        placeholderText: i18n("50")
+        placeholderText: "50"
         validator: IntValidator {bottom: 0; top: 9999}
     }
 

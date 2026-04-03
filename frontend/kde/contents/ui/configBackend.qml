@@ -17,11 +17,11 @@ Kirigami.FormLayout {
     property alias cfg_onlineSearchMaxRetries: onlineSearchMaxRetries.text
 
     Label {
-        text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.')
+        text: i18n("Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.")
         font.bold: true
     }
     Label {
-        text: i18n('After saving settings, right-click the widget\nthen select "Reload" to make the changes take effect.\n')
+        text: i18n("After saving settings, right-click the widget\nthen select \"Reload\" to make the changes take effect.\n")
         font.bold: true
     }
 
@@ -39,7 +39,7 @@ Kirigami.FormLayout {
     }
 
     Label {
-        text: i18n('(<html>For available providers, see the project\'s <a href="https://github.com/chiyuki0325/lyrica/blob/v1/docs/LYRIC_PROVIDERS.md">GitHub page.</a></html>)')
+        text: i18n("(<html>For available providers, see the project's <a href=\"https://github.com/chiyuki0325/lyrica/blob/v1/docs/LYRIC_PROVIDERS.md\">GitHub page.</a></html>)")
         onLinkActivated: Qt.openUrlExternally(link)
     }
 
@@ -48,7 +48,7 @@ Kirigami.FormLayout {
     }
 
     Label {
-        text: i18n('Online lyric search pattern:')
+        text: i18n("Online lyric search pattern:")
     }
 
     ComboBox {
@@ -56,11 +56,11 @@ Kirigami.FormLayout {
         textRole: 'label'
         model: [
             {
-                'label': i18n('Title + Artist'),
+                'label': i18n("Title + Artist"),
                 'value': 0
             },
             {
-                'label': i18n('Title only (may not accurate)'),
+                'label': i18n("Title only (may not accurate)"),
                 'value': 1
             }
         ]

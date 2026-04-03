@@ -1,0 +1,163 @@
+# Translation of Lyrica in zh_TW
+# Copyright (C) 2026
+# This file is distributed under the same license as the Lyrica package.
+#
+# SPDX-FileCopyrightText: 2026 Kirikaze Chiyuki <me@chyk.ink>
+#: ../contents/ui/configFrontend.qml
+msgid ""
+msgstr ""
+"Project-Id-Version: Lyrica\n"
+"Report-Msgid-Bugs-To: https://github.com/chiyuki0325/lyrica\n"
+"POT-Creation-Date: 2026-04-03 21:09+0800\n"
+"PO-Revision-Date: 2026-04-03 21:12+0800\n"
+"Last-Translator: Kirikaze Chiyuki <me@chyk.ink>\n"
+"Language-Team: Chinese <kde-i18n-doc@kde.org>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Lokalize 25.12.1\n"
+
+#: ../contents/config/config.qml
+msgid "Display"
+msgstr "顯示設定"
+
+#: ../contents/config/config.qml
+msgid "Behavior"
+msgstr "行為設定"
+
+#: ../contents/ui/configBackend.qml
+msgid ""
+"Note that the backend settings will share among all the Lyrica widgets.\n"
+"Using only one widget is recommended."
+msgstr ""
+"請注意，後端設定將在所有 Lyrica 元件之間共用。\n"
+"建議僅使用一個元件。"
+
+#: ../contents/ui/configBackend.qml
+msgid ""
+"After saving settings, right-click the widget\n"
+"then select \"Reload\" to make the changes take effect.\n"
+msgstr ""
+"儲存設定後，請右鍵點擊 Lyrica 元件，\n"
+"然後選擇「重新載入設定」以使更改生效。\n"
+
+#: ../contents/ui/configBackend.qml
+msgid "Disabled players (comma separated):"
+msgstr "停用的播放器（半形逗號分隔）："
+
+#: ../contents/ui/configBackend.qml
+msgid "Enabled lyric providers (comma separated):"
+msgstr "啟用的歌詞源（半形逗號分隔）："
+
+#: ../contents/ui/configBackend.qml
+msgid ""
+"(<html>For available providers, see the project's <a href=\"https://"
+"github.com/chiyuki0325/lyrica/blob/v1/docs/LYRIC_PROVIDERS.md\">GitHub page."
+"</a></html>)"
+msgstr ""
+"(<html>專案的 <a href=\"https://"
+"github.com/chiyuki0325/lyrica/blob/v1/docs/LYRIC_PROVIDERS.md\">GitHub 頁面"
+"</a>上展示了可用的歌詞源。</html>)"
+
+#: ../contents/ui/configBackend.qml
+msgid "Online lyric search pattern:"
+msgstr "線上搜尋模式："
+
+#: ../contents/ui/configBackend.qml
+msgid "Title + Artist"
+msgstr "根據歌曲名 + 歌手名"
+
+#: ../contents/ui/configBackend.qml
+msgid "Title only (may not accurate)"
+msgstr "僅根據歌曲名（可能不準確）"
+
+#: ../contents/ui/configBackend.qml
+msgid "Online search timeout (seconds):"
+msgstr "線上搜尋逾時秒數："
+
+#: ../contents/ui/configBackend.qml
+msgid "Retry online search if failed"
+msgstr "線上搜尋失敗時重試"
+
+#: ../contents/ui/configBackend.qml
+msgid "Max retries for online search (if retry enabled):"
+msgstr "線上搜尋最大重試次數："
+
+#: ../contents/ui/configBackend.qml
+msgid ""
+"Disabled folders (one per line):\n"
+"Musics in these folders will be treated as instrumental and won't be "
+"searched for lyrics."
+msgstr ""
+"停用的資料夾（每行一個）：\n"
+"這些資料夾中的音樂將被視為純音樂，不會搜尋歌詞。"
+
+#: ../contents/ui/configBackend.qml
+msgid "Alternative folder to search for .lrc files:"
+msgstr "搜尋 .lrc 檔案的備用資料夾："
+
+#: ../contents/ui/configFrontend.qml
+msgid "Lyric translation mode:"
+msgstr "歌詞翻譯顯示模式："
+
+#: ../contents/ui/configFrontend.qml
+msgid "Show original lyric only"
+msgstr "僅顯示原文"
+
+#: ../contents/ui/configFrontend.qml
+msgid "Show translation only"
+msgstr "僅顯示翻譯"
+
+#: ../contents/ui/configFrontend.qml
+msgid "Original lyric | Translation"
+msgstr "原文 | 翻譯"
+
+#: ../contents/ui/configFrontend.qml
+msgid "Translation | Original lyric"
+msgstr "翻譯 | 原文"
+
+#: ../contents/ui/configFrontend.qml
+msgid "Character Limit:"
+msgstr "字元長度限制："
+
+#: ../contents/ui/configFrontend.qml
+msgid "Ignore the setting below and use theme default size"
+msgstr "忽略下方設定並使用佈景主題預設字級"
+
+#: ../contents/ui/configFrontend.qml
+msgid "Custom font size:"
+msgstr "自訂字型大小："
+
+#: ../contents/ui/configFrontend.qml
+msgid "Layout Height:"
+msgstr "佈局高度："
+
+#: ../contents/ui/configFrontend.qml
+msgid "Show [Reconnecting...] text when connection lost"
+msgstr "連線中斷時顯示 [正在重新連線...] 文字"
+
+#: ../contents/ui/configFrontend.qml
+msgid "Use theme default text color"
+msgstr "使用佈景主題預設文字顏色"
+
+#: ../contents/ui/configFrontend.qml
+msgid "Custom text color:"
+msgstr "自訂文字顏色："
+
+#: ../contents/ui/main.qml
+msgid "[No lyric]"
+msgstr "[無歌詞]"
+
+#: ../contents/ui/main.qml
+msgid "Reconnecting"
+msgstr "正在重新連線"
+
+#: ../contents/ui/main.qml
+msgid "Reload configuration"
+msgstr "重新載入設定"
+
+#: ../contents/ui/main.qml
+msgid "Restart Lyrica"
+msgstr "重啟 Lyrica"
