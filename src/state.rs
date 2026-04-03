@@ -9,10 +9,10 @@ use crate::messages::ChannelMessage;
 #[derive(Debug, Clone, Default)]
 pub(crate) struct State {
     // for new client connections, we need to send the current state immediately
-    title: String,
-    artist: String,
-    text: String,
-    alt: Option<String>,
+    pub title: String,
+    pub artist: String,
+    pub text: String,
+    pub alt: Option<String>,
 }
 
 pub(crate) async fn start_manage_state(

@@ -1,5 +1,5 @@
-use crate::config::Config;
 use crate::messages::*;
+use crate::{config::Config, state::State};
 use actix::{Actor, AsyncContext, Handler, StreamHandler};
 use actix_web::{Error, HttpRequest, HttpResponse, web};
 use actix_web_actors::ws;
@@ -25,12 +25,13 @@ impl From<ChannelMessage> for WebSocketPacket {
     }
 }
 
-pub(crate) struct LyricaSocket {
+pub(crate) struct LyricaWebSocketActor {
     rx: broadcast::Receiver<ChannelMessage>,
     config: Arc<RwLock<Config>>,
+    state: Arc<RwLock<State>>,
 }
 
-impl Actor for LyricaSocket {
+impl Actor for LyricaWebSocketActor {
     type Context = ws::WebsocketContext<Self>;
     fn started(&mut self, ctx: &mut Self::Context) {
         println!("WebSocket connection established");
@@ -38,9 +39,20 @@ impl Actor for LyricaSocket {
         let mut rx = self.rx.resubscribe();
         let ctx_address = ctx.address();
 
-        // TODO: Send current music information and lyric line when a new client connects
-
+        let state = self.state.clone();
         let fut = async move {
+            // Send current status to client immediately after connection
+            let state = state.read().await;
+            ctx_address.do_send(ChannelMessage::update_music_info(
+                state.title.clone(),
+                state.artist.clone(),
+            ));
+            ctx_address.do_send(ChannelMessage::update_lyric_line(
+                0,
+                state.text.clone(),
+                state.alt.clone(),
+            ));
+            drop(state);
             while let Ok(msg) = rx.recv().await {
                 ctx_address.do_send(msg);
             }
@@ -53,7 +65,7 @@ impl actix::Message for ChannelMessage {
     type Result = ();
 }
 
-impl Handler<ChannelMessage> for LyricaSocket {
+impl Handler<ChannelMessage> for LyricaWebSocketActor {
     type Result = ();
 
     fn handle(&mut self, msg: ChannelMessage, ctx: &mut Self::Context) {
@@ -70,7 +82,7 @@ impl Handler<ChannelMessage> for LyricaSocket {
 }
 
 /// Handler for ws::Message message
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for LyricaSocket {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for LyricaWebSocketActor {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
@@ -86,11 +98,13 @@ pub(crate) async fn ws_index(
     stream: web::Payload,
     tx: web::Data<broadcast::Sender<ChannelMessage>>,
     config: web::Data<RwLock<Config>>,
+    state: web::Data<RwLock<State>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
-        LyricaSocket {
+        LyricaWebSocketActor {
             rx: tx.subscribe(),
             config: config.into_inner(),
+            state: state.into_inner(),
         },
         &req,
         stream,
