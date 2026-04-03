@@ -41,22 +41,23 @@ impl fmt::Display for LyricLine {
         }
     }
 }
-
-impl TryFrom<String> for LyricLine {
-    // parse one line
-
+impl TryFrom<&str> for LyricLine {
     type Error = ();
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
         // [01:23.45] Hello world
         // [01:23:450] Hello world (malformed but we can still parse it)
+
         let time_end = value.find(']').ok_or(())?;
+        if !value.starts_with('[') {
+            return Err(());
+        }
 
-        let time_str = &value[1..time_end]; // skip the leading '['
+        let time_str = &value[1..time_end];
+
         let time_parts = time_str.split(&[':', '.'][..]).collect::<Vec<_>>();
-
         if time_parts.len() < 2 {
-            return Err(()); // invalid format
+            return Err(());
         }
 
         let minutes: u64 = time_parts[0].parse().map_err(|_| ())?;
@@ -74,6 +75,7 @@ impl TryFrom<String> for LyricLine {
         };
 
         let text = value[time_end + 1..].trim().to_string();
+
         Ok(LyricLine {
             time: minutes * 60000 + seconds * 1000 + milliseconds,
             text,
@@ -82,15 +84,27 @@ impl TryFrom<String> for LyricLine {
     }
 }
 
-impl TryFrom<String> for Lyric {
+impl TryFrom<String> for LyricLine {
     type Error = ();
-
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        // parse lrc file content
+        Self::try_from(value.as_str())
+    }
+}
+
+impl Lyric {
+    fn from_lines_iter<'a, I>(lines_iter: I) -> Result<Self, ()>
+    where
+        I: IntoIterator<Item = &'a str>,
+    {
         let mut lines = Vec::<LyricLine>::new();
-        for line in value.lines() {
-            if let Ok(lyric_line) = LyricLine::try_from(line.to_string()) {
-                // if timestamp is same as the last line, append as tlyric
+
+        for line_str in lines_iter {
+            let line_trim = line_str.trim();
+            if line_trim.is_empty() {
+                continue;
+            }
+
+            if let Ok(lyric_line) = LyricLine::try_from(line_trim) {
                 if let Some(last_line) = lines.last_mut() {
                     if last_line.time == lyric_line.time {
                         last_line.alt = Some(lyric_line.text);
@@ -99,10 +113,9 @@ impl TryFrom<String> for Lyric {
                 }
                 lines.push(lyric_line);
             } else {
-                // append to the last line's text if the line is not a valid lyric line
                 if let Some(last_line) = lines.last_mut() {
-                    last_line.text.push_str(" ");
-                    last_line.text.push_str(line.trim());
+                    last_line.text.push(' ');
+                    last_line.text.push_str(line_trim);
                 }
             }
         }
@@ -110,14 +123,14 @@ impl TryFrom<String> for Lyric {
     }
 }
 
-impl TryFrom<(String, String)> for Lyric {
-    // parse lrc file content with translation or romanization
-
-    type Error = ();
-
-    fn try_from(value: (String, String)) -> Result<Self, Self::Error> {
-        let original = Lyric::try_from(value.0)?;
-        let alt = Lyric::try_from(value.1)?;
+impl Lyric {
+    fn from_lines_iters<'a, I>(lyric_lines_iter: I, alt_lines_iter: I) -> Result<Self, ()>
+    where
+        I: IntoIterator<Item = &'a str>,
+    {
+        // parse lrc file content with translation or romanization
+        let original = Self::from_lines_iter(lyric_lines_iter)?;
+        let alt = Self::from_lines_iter(alt_lines_iter)?;
 
         let mut alt_map = std::collections::HashMap::<u64, String>::new();
         for line in alt.lines {
@@ -134,6 +147,41 @@ impl TryFrom<(String, String)> for Lyric {
             .collect();
 
         Ok(Lyric { lines })
+    }
+}
+
+impl TryFrom<Vec<String>> for Lyric {
+    type Error = ();
+
+    fn try_from(value: Vec<String>) -> Result<Self, Self::Error> {
+        Self::from_lines_iter(value.iter().map(String::as_str))
+    }
+}
+
+impl TryFrom<String> for Lyric {
+    type Error = ();
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::from_lines_iter(value.lines())
+    }
+}
+
+impl TryFrom<(String, String)> for Lyric {
+    type Error = ();
+
+    fn try_from(value: (String, String)) -> Result<Self, Self::Error> {
+        Self::from_lines_iters(value.0.lines(), value.1.lines())
+    }
+}
+
+impl TryFrom<(Vec<String>, Vec<String>)> for Lyric {
+    type Error = ();
+
+    fn try_from(value: (Vec<String>, Vec<String>)) -> Result<Self, Self::Error> {
+        Self::from_lines_iters(
+            value.0.iter().map(String::as_str),
+            value.1.iter().map(String::as_str),
+        )
     }
 }
 

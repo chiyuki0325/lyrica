@@ -15,7 +15,7 @@ pub(crate) struct FileLyricProvider;
 
 impl FileLyricProvider {
     fn try_parse_url(&self, metadata: &Metadata) -> Option<PathBuf> {
-        let raw_url = metadata.xesam_url().or_else(|| metadata.mpris_art_url())?;
+        let raw_url = metadata.url()?;
         if raw_url.starts_with("file://") {
             Some(Url::parse(&raw_url).ok()?.to_file_path().ok()?)
         } else {

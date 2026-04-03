@@ -10,7 +10,6 @@ mod websocket;
 
 use actix_web::{App, HttpServer, web};
 use lazy_static::lazy_static;
-use log::info;
 use tokio::sync::{RwLock, broadcast};
 
 use crate::config::Config;

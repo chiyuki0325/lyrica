@@ -61,12 +61,29 @@ impl Metadata {
         self.get_string("mpris:artUrl")
     }
 
+    pub fn url(&self) -> Option<String> {
+        self.xesam_url()
+            .or_else(|| self.mpris_art_url())
+    }
+
     pub fn mpris_track_id(&self) -> Option<String> {
         self.get_object_path_as_string("mpris:trackid")
     }
 
     pub fn has_song_info(&self) -> bool {
         self.xesam_title().is_some() && self.xesam_artist().is_some()
+    }
+
+    pub fn xesam_as_text(&self) -> Option<String> {
+        self.get_string("xesam:asText")
+    }
+
+    pub fn length(&self) -> Option<u64> {
+        let length = self.0
+            .get("mpris:length")?
+            .downcast_ref::<i64>()
+            .ok()?;
+        Some(length as u64)
     }
 }
 
