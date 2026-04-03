@@ -28,7 +28,7 @@ pub(crate) enum PlaybackEvent {
     Seek(u64),
     RateChange(f64),
     Poll(u64), // only for polling mode, not emitted by players
-    Reset(), // song changed
+    Reset(),   // song changed
 }
 
 impl fmt::Display for PlaybackEvent {
@@ -46,19 +46,28 @@ impl fmt::Display for PlaybackEvent {
 
 impl MprisListener {
     async fn player_proxy<'a>(&self, service_name: &'a str) -> zbus::Result<PlayerProxy<'a>> {
-        PlayerProxy::new(&self.conn, service_name).await
+        PlayerProxy::builder(&self.conn)
+            .destination(service_name)?
+            .cache_properties(zbus::proxy::CacheProperties::No)
+            .build()
+            .await
     }
 
     async fn player_properties_proxy<'a>(
         &self,
         service_name: &'a str,
     ) -> zbus::Result<PlayerPropertiesProxy<'a>> {
-        PlayerPropertiesProxy::new(&self.conn, service_name).await
+        PlayerPropertiesProxy::builder(&self.conn)
+            .destination(service_name)?
+            .cache_properties(zbus::proxy::CacheProperties::No)
+            .build()
+            .await
     }
 
     pub(crate) async fn start_observation<'a>(&self, player_id: String) -> zbus::Result<()> {
         let service_name = format!("{}{}", MPRIS_PREFIX, player_id);
         let player_proxy = self.player_proxy(&service_name).await?;
+        let player_properties_proxy = self.player_properties_proxy(&service_name).await?;
 
         // channel for playback events, received in lyric session
         let (pbtx, pbrx) = channel::<PlaybackEvent>(16);
@@ -72,29 +81,34 @@ impl MprisListener {
         .await;
 
         // try spawn lyric session if song is already playing
-        self.bootstrap_lyric_session(&service_name, &mut ssmgr)
+        self.bootstrap_lyric_session(&player_proxy, &mut ssmgr)
             .await;
 
         // start listening for property changes
         let pbtx1 = pbtx.clone();
         let listen_properties_handle =
-            self.start_listen_properties(service_name.as_str(), ssmgr, pbtx1);
+            self.start_listen_properties(&player_proxy, &player_properties_proxy, ssmgr, pbtx1);
 
         // start listening for seeked signal
         let pbtx2 = pbtx.clone();
-        let listen_seeked_handle: BoxFuture<'_, zbus::Result<()>> =
-            if POLL_PLAYERS.iter().any(|p| player_id.starts_with(p)) {
-                // start polling position if player is in polling mode list
-                if self.config.read().await.verbose {
-                    // TODO: migrate to rust log crate
-                    println!("Entering polling mode because of the weird behavior of player {}, high latency expected", player_id);
-                }
-                self.start_poll_position(service_name.as_str(), pbtx2)
-                    .boxed()
-            } else {
-                self.start_listen_seeked(service_name.as_str(), pbtx2)
-                    .boxed()
-            };
+        let listen_seeked_handle: BoxFuture<'_, zbus::Result<()>> = if POLL_PLAYERS
+            .iter()
+            .any(|p| player_id.starts_with(p))
+        {
+            // start polling position if player is in polling mode list
+            if self.config.read().await.verbose {
+                // TODO: migrate to rust log crate
+                println!(
+                    "Entering polling mode because of the weird behavior of player {}, high latency expected",
+                    player_id
+                );
+            }
+            self.start_poll_position(&player_proxy, pbtx2)
+                .boxed()
+        } else {
+            self.start_listen_seeked(&player_proxy, pbtx2)
+                .boxed()
+        };
 
         drop(pbtx);
 
@@ -105,25 +119,24 @@ impl MprisListener {
 
     async fn start_listen_properties<'a>(
         &self,
-        service_name: &str,
+        player_proxy: &PlayerProxy<'a>,
+        player_properties_proxy: &PlayerPropertiesProxy<'a>,
         mut ssmgr: SessionManager,
         pbtx: Sender<PlaybackEvent>,
     ) -> zbus::Result<()> {
-        let player_properties_proxy = self.player_properties_proxy(service_name).await?;
         let mut properties_stream = player_properties_proxy.receive_properties_changed().await?;
 
         while let Some(signal) = properties_stream.next().await {
             let args = signal.args().expect("Error parsing message");
             for event in self
-                .dispatch_properties(service_name, args.changed_properties)
+                .dispatch_properties(player_proxy, args.changed_properties)
                 .await
                 .into_iter()
             {
                 match event {
                     PlaybackEvent::Reset() => {
                         // if song changed, restart lyric session
-                        self.bootstrap_lyric_session(&service_name, &mut ssmgr)
-                            .await;
+                        self.bootstrap_lyric_session(player_proxy, &mut ssmgr).await;
                     }
                     _ => {
                         pbtx.send(event).ok();
@@ -137,10 +150,9 @@ impl MprisListener {
 
     async fn start_listen_seeked<'a>(
         &self,
-        service_name: &str,
+        player_proxy: &PlayerProxy<'a>,
         pbtx: Sender<PlaybackEvent>,
     ) -> zbus::Result<()> {
-        let player_proxy = self.player_proxy(service_name).await?;
         let mut seeked_stream = player_proxy.receive_seeked().await?;
 
         while let Some(signal) = seeked_stream.next().await {
@@ -154,18 +166,12 @@ impl MprisListener {
 
     async fn start_poll_position<'a>(
         &self,
-        service_name: &'a str,
+        player_proxy: &PlayerProxy<'a>,
         pbtx: Sender<PlaybackEvent>,
     ) -> zbus::Result<()> {
         let mut position = 0;
         loop {
-            let new_position = self
-                .player_proxy(service_name)
-                .await?
-                .position()
-                .await
-                .ok()
-                .unwrap_or(0);
+            let new_position = player_proxy.position().await.ok().unwrap_or(0);
             if new_position != position {
                 // manually emit seeked signal
                 pbtx.send(PlaybackEvent::Poll((new_position / 1000) as u64))
@@ -178,10 +184,9 @@ impl MprisListener {
 
     async fn bootstrap_lyric_session<'a>(
         &self,
-        service_name: &str,
+        player_proxy: &PlayerProxy<'a>,
         ssmgr: &mut SessionManager,
     ) -> Option<()> {
-        let player_proxy = self.player_proxy(service_name).await.ok()?;
         let metadata = player_proxy.metadata().await.ok()?;
         let playback_status = player_proxy.playback_status().await.ok()?;
         let rate = player_proxy.rate().await.ok().unwrap_or(1.0);
@@ -224,7 +229,7 @@ impl MprisListener {
 
     async fn dispatch_properties<'a>(
         &self,
-        service_name: &'a str,
+        player_proxy: &PlayerProxy<'a>,
         changed_properties: HashMap<String, OwnedValue>,
     ) -> Vec<PlaybackEvent> {
         let mut events = Vec::new();
@@ -242,11 +247,8 @@ impl MprisListener {
                         events.push(PlaybackEvent::RateChange(rate));
 
                         // push latest time when rate changed to trigger re-anchor
-                        let player_proxy = self.player_proxy(service_name).await;
-                        if let Ok(proxy) = player_proxy {
-                            let position = proxy.position().await.ok().unwrap_or(0);
-                            events.push(PlaybackEvent::Seek((position / 1000) as u64));
-                        }
+                        let position = player_proxy.position().await.ok().unwrap_or(0);
+                        events.push(PlaybackEvent::Seek((position / 1000) as u64));
                     }
                 }
                 "PlaybackStatus" => {
@@ -258,11 +260,8 @@ impl MprisListener {
                             _ => continue,
                         });
                         // push latest time when pause/play
-                        let player_proxy = self.player_proxy(service_name).await;
-                        if let Ok(proxy) = player_proxy {
-                            let position = proxy.position().await.ok().unwrap_or(0);
-                            events.push(PlaybackEvent::Seek((position / 1000) as u64));
-                        }
+                        let position = player_proxy.position().await.ok().unwrap_or(0);
+                        events.push(PlaybackEvent::Seek((position / 1000) as u64));
                     }
                 }
                 _ => continue,
