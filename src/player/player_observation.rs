@@ -16,7 +16,7 @@ use crate::player::{MPRIS_PREFIX, MprisListener, dbus_proxies::*};
 lazy_static! {
     // Players that not emitting seeked signal
     // So we have to keep polling position to detect seek
-    pub(crate) static ref QUIRK_PLAYERS: Vec<String> = vec![
+    pub(crate) static ref POLL_PLAYERS: Vec<String> = vec![
         "elisa".to_string(),
     ];
 }
@@ -27,6 +27,7 @@ pub(crate) enum PlaybackEvent {
     Pause,
     Seek(u64),
     RateChange(f64),
+    Poll(u64), // only for polling mode, not emitted by players
     Reset(), // song changed
 }
 
@@ -37,6 +38,7 @@ impl fmt::Display for PlaybackEvent {
             PlaybackEvent::Pause => write!(f, "- Pause"),
             PlaybackEvent::Seek(pos) => write!(f, "- Seek({} ms)", pos),
             PlaybackEvent::RateChange(rate) => write!(f, "- RateChange({})", rate),
+            PlaybackEvent::Poll(position) => write!(f, "- Poll({} ms)", position),
             PlaybackEvent::Reset() => write!(f, "- Reset()"),
         }
     }
@@ -81,11 +83,11 @@ impl MprisListener {
         // start listening for seeked signal
         let pbtx2 = pbtx.clone();
         let listen_seeked_handle: BoxFuture<'_, zbus::Result<()>> =
-            if QUIRK_PLAYERS.iter().any(|p| player_id.starts_with(p)) {
-                // start polling position if player is in quirk list
+            if POLL_PLAYERS.iter().any(|p| player_id.starts_with(p)) {
+                // start polling position if player is in polling mode list
                 if self.config.read().await.verbose {
                     // TODO: migrate to rust log crate
-                    println!("Entering polling mode because of player quirks, may cause high latency");
+                    println!("Entering polling mode because of the weird behavior of player {}, high latency expected", player_id);
                 }
                 self.start_poll_position(service_name.as_str(), pbtx2)
                     .boxed()
@@ -166,7 +168,7 @@ impl MprisListener {
                 .unwrap_or(0);
             if new_position != position {
                 // manually emit seeked signal
-                pbtx.send(PlaybackEvent::Seek((new_position / 1000) as u64))
+                pbtx.send(PlaybackEvent::Poll((new_position / 1000) as u64))
                     .ok();
                 position = new_position;
             }

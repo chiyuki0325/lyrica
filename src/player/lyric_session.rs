@@ -30,6 +30,15 @@ impl Drop for SessionManager {
 }
 
 impl SessionManager {
+    #[inline]
+    fn scaled_elapsed_ms(elapsed_ms: u64, rate: f64) -> u64 {
+        if rate == 1.0 {
+            elapsed_ms
+        } else {
+            ((elapsed_ms as f64) * rate) as u64
+        }
+    }
+
     pub async fn new(
         player_id: String,
         config: Arc<RwLock<Config>>,
@@ -51,10 +60,11 @@ impl SessionManager {
 
         // start new session
         let msgtx = self.msgtx.clone();
+        let pbtx = self.pbtx.clone();
         let pbrx = self.pbtx.subscribe();
         let config = self.config.clone();
         self.handle = Some(tokio::spawn(async move {
-            Self::start_lyric_session(config, lyric, msgtx, pbrx).await;
+            Self::start_lyric_session(config, lyric, msgtx, pbtx, pbrx).await;
         }));
     }
 
@@ -62,6 +72,7 @@ impl SessionManager {
         config: Arc<RwLock<Config>>,
         lyric: Lyric,
         msgtx: Sender<ChannelMessage>,
+        pbtx: Sender<PlaybackEvent>,
         mut pbrx: Receiver<PlaybackEvent>,
     ) {
         let mut anchor_realworld_time = Instant::now();
@@ -81,8 +92,10 @@ impl SessionManager {
             let timer = async {
                 if !paused && position < lyric_lines {
                     let target_time = lyric.lines[position].time;
-                    let target_millis_after_anchor =
-                        ((target_time - anchor_music_time) as f64 * rate) as u64;
+                    let target_millis_after_anchor = Self::scaled_elapsed_ms(
+                        target_time.saturating_sub(anchor_music_time),
+                        rate,
+                    );
                     let target_instant =
                         anchor_realworld_time + Duration::from_millis(target_millis_after_anchor);
                     sleep_until(target_instant).await;
@@ -108,7 +121,9 @@ impl SessionManager {
 
                 event = pbrx.recv() => {
                     if config.read().await.verbose {
-                        println!("{}", event.as_ref().map(|e| e.to_string()).unwrap_or_default());
+                        if let Ok(ev) = &event && !matches!(ev, PlaybackEvent::Poll(_)) {
+                            println!("{}", ev.to_string());
+                        }
                     }
                     match event {
                         Ok(PlaybackEvent::Seek(new_time)) => {
@@ -138,6 +153,16 @@ impl SessionManager {
                                 }
                             }
                         }
+                        Ok(PlaybackEvent::Poll(real_music_time)) => {
+                            let now = Instant::now();
+                            let elapsed_ms = now.duration_since(anchor_realworld_time).as_millis() as u64;
+                            let expected_music_time = anchor_music_time.saturating_add(Self::scaled_elapsed_ms(elapsed_ms, rate));
+                            if real_music_time.abs_diff(expected_music_time) > 100 {
+                                // Position updated!
+                                // Reuse "Seek" event for simplicity, even though it's not exactly a seek
+                                pbtx.send(PlaybackEvent::Seek(real_music_time)).ok();
+                            }
+                        }
                         Ok(PlaybackEvent::Pause) => {
                             paused = true;
                         }
@@ -162,7 +187,7 @@ impl SessionManager {
         }
     }
 
-    pub(crate) fn send(&self, event: PlaybackEvent) {
+    pub(crate) async fn send(&self, event: PlaybackEvent) {
         self.pbtx.send(event).ok();
     }
 }
