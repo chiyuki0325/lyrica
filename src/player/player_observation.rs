@@ -2,7 +2,7 @@ use futures_util::FutureExt;
 use futures_util::future::BoxFuture;
 use futures_util::stream::StreamExt;
 use lazy_static::lazy_static;
-use log::info;
+use log::{info, debug};
 use std::collections::HashMap;
 use std::fmt;
 use tokio::sync::broadcast::{Sender, channel};
@@ -69,6 +69,7 @@ impl MprisListener {
         let service_name = format!("{}{}", MPRIS_PREFIX, player_id);
         let player_proxy = self.player_proxy(&service_name).await?;
         let player_properties_proxy = self.player_properties_proxy(&service_name).await?;
+        let properties_stream = player_properties_proxy.receive_properties_changed().await?;
 
         // channel for playback events, received in lyric session
         let (pbtx, pbrx) = channel::<PlaybackEvent>(16);
@@ -82,13 +83,12 @@ impl MprisListener {
         .await;
 
         // try spawn lyric session if song is already playing
-        self.bootstrap_lyric_session(&player_proxy, &mut ssmgr)
-            .await;
+        self.bootstrap_lyric_session(&player_proxy, &mut ssmgr).await;
 
         // start listening for property changes
         let pbtx1 = pbtx.clone();
         let listen_properties_handle =
-            self.start_listen_properties(&player_proxy, &service_name, ssmgr, pbtx1);
+            self.start_listen_properties(&player_proxy, properties_stream, ssmgr, pbtx1);
 
         // start listening for seeked signal
         let pbtx2 = pbtx.clone();
@@ -96,7 +96,7 @@ impl MprisListener {
             .iter()
             .any(|p| player_id.starts_with(p))
         {
-            // start polling position if player is in polling mode list
+            // or start polling position if player is in polling mode list
             info!(
                 "Entering polling mode because of the weird behavior of player {}, high latency expected",
                 player_id
@@ -116,13 +116,10 @@ impl MprisListener {
     async fn start_listen_properties<'a>(
         &self,
         player_proxy: &PlayerProxy<'a>,
-        service_name: &str,
+        mut properties_stream: PropertiesChangedStream,
         mut ssmgr: SessionManager,
         pbtx: Sender<PlaybackEvent>,
     ) -> zbus::Result<()> {
-        let player_properties_proxy = self.player_properties_proxy(service_name).await?;
-        let mut properties_stream = player_properties_proxy.receive_properties_changed().await?;
-
         while let Some(signal) = properties_stream.next().await {
             let args = signal.args().expect("Error parsing message");
             for event in self
@@ -145,9 +142,9 @@ impl MprisListener {
         Ok(())
     }
 
-    async fn start_listen_seeked<'a>(
+    async fn start_listen_seeked(
         &self,
-        player_proxy: &PlayerProxy<'a>,
+        player_proxy: &PlayerProxy<'_>,
         pbtx: Sender<PlaybackEvent>,
     ) -> zbus::Result<()> {
         let mut seeked_stream = player_proxy.receive_seeked().await?;
@@ -190,6 +187,7 @@ impl MprisListener {
         let position = player_proxy.position().await.ok().unwrap_or(0);
 
         if metadata.has_song_info() {
+            debug!("Bootstrapping lyric session with metadata: {:?}", metadata);
             // song playing when we start observation, start lyric session immediately
             let lyric = try_get_lyric_from_providers(&metadata, self.config.clone()).await;
 
