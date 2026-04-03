@@ -16,6 +16,8 @@ _THREAD: Optional[threading.Thread] = None
 interval: str = 50
 source_name: str = ""
 
+port: int = 15650
+
 metadata: str = ""
 lyric_line: str = ""
 
@@ -46,15 +48,15 @@ def lyrica_thread():
     global metadata, lyric_line
     async def listen():
         global metadata, lyric_line
-        async with websockets.connect("ws://127.0.0.1:15649/ws") as websocket:
+        async with websockets.connect(f"ws://127.0.0.1:{port}/ws") as websocket:
             while True:
                 message = json.loads(await websocket.recv())
                 match message["id"]:
-                    case 0:
-                        metadata = "Now Playing: " + message["data"]["music_info"]["artist"] + " - " + message["data"]["music_info"]["title"]
-                        lyric_line = ""
                     case 1:
-                        lyric_line = message["data"]["lyric_line"]["lyric"]
+                        metadata = "Now Playing: " + message["data"]["update_music_info"]["artist"] + " - " + message["data"]["update_music_info"]["title"]
+                        lyric_line = ""
+                    case 0:
+                        lyric_line = message["data"]["update_lyric_line"]["text"]
     _LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_LOOP)
 
@@ -68,7 +70,14 @@ def lyrica_thread():
     _LOOP.close()
     _LOOP = None
 
-
+def reload_pressed(props, prop):
+    global _THREAD
+    if _THREAD is not None:
+        # Wait for 5 seconds, if it doesn't exit just move on not to block
+        # OBS main thread. Logging something about the failure to properly exit
+        # is advised.
+        _THREAD.join(timeout=5)
+        _THREAD = None
 
 def script_load(settings):
     _THREAD = threading.Thread(None, lyrica_thread, daemon=True)
@@ -88,18 +97,23 @@ def script_unload():
 def script_update(settings):
     global interval
     global source_name
-
+    global port
+    
     interval = obs.obs_data_get_int(settings, "interval")
     source_name = obs.obs_data_get_string(settings, "source")
+    port = obs.obs_data_get_int(settings, "port")
 
     if source_name != "":
         obs.timer_add(update_text, interval)
 
 def script_defaults(settings):
     obs.obs_data_set_default_int(settings, "interval", 1000)
+    obs.obs_data_set_default_int(settings, "port", 15650)
 
 def script_properties():
     props = obs.obs_properties_create()
+
+    obs.obs_properties_add_int(props, "port", "Websocket Port", 1, 65535, 1)
 
     obs.obs_properties_add_int(props, "interval", "Update Interval (Milliseconds)", 1, 3600, 1)
 
@@ -114,5 +128,6 @@ def script_properties():
 
         obs.source_list_release(sources)
 
+    obs.obs_properties_add_button(props, "button", "Reload", reload_pressed)
     obs.obs_properties_add_button(props, "button", "Refresh", refresh_pressed)
     return props
