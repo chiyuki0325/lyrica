@@ -6,16 +6,15 @@ import org.kde.kirigami as Kirigami
 Kirigami.FormLayout {
     id: page
 
-    property int cfg_tlyricMode: 0
-    property int cfg_onlineSearchPattern: 0
-    property alias cfg_verbose: verbose.checked
     property alias cfg_disabledPlayers: disabledPlayers.text
     property alias cfg_enabledLyricProviders: enabledLyricProviders.text
     property alias cfg_disabledFolders: disabledFolders.text
     property alias cfg_lyricSearchFolder: lyricSearchFolder.text
 
+    property int cfg_onlineSearchPattern: 0
     property alias cfg_onlineSearchTimeout: onlineSearchTimeout.text
     property alias cfg_onlineSearchRetry: onlineSearchRetry.checked
+    property alias cfg_onlineSearchMaxRetries: onlineSearchMaxRetries.text
 
     Label {
         text: i18n('Note that the backend settings will share among all the Lyrica widgets.\nUsing only one widget is recommended.')
@@ -26,64 +25,26 @@ Kirigami.FormLayout {
         font.bold: true
     }
 
-    Label {
-        text: i18n('Lyric translation mode:')
-    }
-
-    ComboBox {
-        id: tlyricMode
-        textRole: 'label'
-        model: [
-            {
-                'label': i18n('Show original lyric only'),
-                'value': 0
-            },
-            {
-                'label': i18n('Show translation only'),
-                'value': 1
-            },
-            {
-                'label': i18n('Original lyric | translation'),
-                'value': 2
-            },
-            {
-                'label': i18n('Translation | original lyric'),
-                'value': 3
-            }
-        ]
-        onCurrentIndexChanged: cfg_tlyricMode = model[currentIndex]['value']
-
-        Component.onCompleted: {
-            for (var i = 0; i < model.length; i++) {
-                if (model[i]['value'] == plasmoid.configuration.tlyricMode) {
-                    tlyricMode.currentIndex = i
-                }
-            }
-        }
-
-        property string currentVal: model[currentIndex]['value']
-    }
-
-    CheckBox {
-        id: verbose
-        text: i18n("Show detailed logs in the journal")
-    }
 
     TextField {
         id: disabledPlayers
         Kirigami.FormData.label: i18n("Disabled players (comma separated):")
-        placeholderText: i18n("firefox,chromium,plasma-browser-integration,kdeconnect")
+        placeholderText: "firefox,chromium,plasma-browser-integration,kdeconnect"
     }
 
     TextField {
         id: enabledLyricProviders
         Kirigami.FormData.label: i18n("Enabled lyric providers (comma separated):")
-        placeholderText: i18n("mpris2_text,file,yesplaymusic,feeluown_netease,netease")
+        placeholderText: "Mpris2Text,File,YesPlayMusic,NeteaseTrackID,FeelUOwnNetease,Netease"
     }
 
     Label {
-        text: i18n('(<html>For available providers, see the project\'s <a href="https://github.com/chiyuki0325/lyrica/blob/next/docs/LYRIC_PROVIDERS.md">GitHub page.</a></html>)')
+        text: i18n('(<html>For available providers, see the project\'s <a href="https://github.com/chiyuki0325/lyrica/blob/v1/docs/LYRIC_PROVIDERS.md">GitHub page.</a></html>)')
         onLinkActivated: Qt.openUrlExternally(link)
+    }
+
+    Item {
+        Layout.fillWidth: true
     }
 
     Label {
@@ -119,7 +80,7 @@ Kirigami.FormLayout {
     TextField {
         id: onlineSearchTimeout
         Kirigami.FormData.label: i18n("Online search timeout (seconds):")
-        placeholderText: i18n("10")
+        placeholderText: "10"
         validator: IntValidator {bottom: 0; top: 500}
     }
 
@@ -128,16 +89,24 @@ Kirigami.FormLayout {
         text: i18n("Retry online search if failed")
     }
 
+    TextField {
+        id: onlineSearchMaxRetries
+        Kirigami.FormData.label: i18n("Max retries for online search (if retry enabled):")
+        placeholderText: "3"
+        validator: IntValidator {bottom: 0; top: 100}
+        visible: onlineSearchRetry.checked
+    }
+
     TextArea {
         id: disabledFolders
         Kirigami.FormData.label: i18n("Disabled folders (one per line):\nMusics in these folders will be treated as instrumental and won't be searched for lyrics.")
-        placeholderText: i18n("/home/user/Music/lyric\n/home/user/Music/lyric2")
+        placeholderText: "/home/user/Music/lyric\n/home/user/Music/lyric2"
     }
 
     TextArea {
         id: lyricSearchFolder
         Kirigami.FormData.label: i18n("Alternative folder to search for .lrc files:")
-        placeholderText: i18n("/home/user/Music/lrc")
+        placeholderText: "/home/user/Music/lrc"
     }
 
 }

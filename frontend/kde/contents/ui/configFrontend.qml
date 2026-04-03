@@ -7,6 +7,7 @@ import org.kde.kquickcontrols as KQuickControls
 Kirigami.FormLayout {
     id: page
 
+    property int cfg_tlyricMode: 0
     property alias cfg_characterLimit: characterLimit.text
     property alias cfg_shouldUseDefaultThemeFontSize: shouldUseDefaultThemeFontSize.checked
     property alias cfg_configuredFontSize: configuredFontSize.text
@@ -15,10 +16,45 @@ Kirigami.FormLayout {
     property alias cfg_shouldUseDefaultThemeTextColor: shouldUseDefaultThemeTextColor.checked
     property alias cfg_configuredTextColor: configuredTextColor.color
 
+    ComboBox {
+        Kirigami.FormData.label: i18n("Lyric translation mode:")
+        id: tlyricMode
+        textRole: 'label'
+        model: [
+            {
+                'label': i18n('Show original lyric only'),
+                'value': 0
+            },
+            {
+                'label': i18n('Show translation only'),
+                'value': 1
+            },
+            {
+                'label': i18n('Original lyric | Translation'),
+                'value': 2
+            },
+            {
+                'label': i18n('Translation | Original lyric'),
+                'value': 3
+            }
+        ]
+        onCurrentIndexChanged: cfg_tlyricMode = model[currentIndex]['value']
+
+        Component.onCompleted: {
+            for (var i = 0; i < model.length; i++) {
+                if (model[i]['value'] == plasmoid.configuration.tlyricMode) {
+                    tlyricMode.currentIndex = i
+                }
+            }
+        }
+
+        property string currentVal: model[currentIndex]['value']
+    }
+
     TextField {
         id: characterLimit
         Kirigami.FormData.label: i18n("Character Limit:")
-        placeholderText: i18n("")
+        placeholderText: i18n("50")
         validator: IntValidator {bottom: 0; top: 9999}
     }
 

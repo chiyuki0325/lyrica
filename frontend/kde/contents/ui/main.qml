@@ -33,23 +33,46 @@ PlasmoidItem {
 
         WebSocket {
             id: socket
-            url: "ws://127.0.0.1:15649/ws"
+            url: "ws://127.0.0.1:15650/ws"
             onTextMessageReceived: (message) => {
                 message = JSON.parse(message)
-                switch (message.id) {
-                    case 0:
+                switch (message["id"]) {
+                    case 1:
                         // Update music metadata
                         text.text = ""
-                        updateLayoutSize()
+                        oneLineLayout.updateLayoutSize()
                         break
-                    case 1:
+                    case 0:
                         // Update lyric line
-                        let lyric = message.data.lyric_line.lyric || ""
-                        if (lyric.length > plasmoid.configuration.characterLimit) {
-                            lyric = lyric.slice(0, plasmoid.configuration.characterLimit) + "..."
+                        let lyric_text = message["data"]["update_lyric_line"]["text"]
+                        let lyric_alt = message["data"]["update_lyric_line"]["alt"]
+                        let update_line = i18n("[No lyric]")
+                        switch (plasmoid.configuration.tlyricMode) {
+                            case 0:
+                                update_line = lyric_text || ""
+                                break
+                            case 1:
+                                update_line = lyric_alt || lyric_text || ""
+                                break
+                            case 2:
+                                update_line = lyric_text || ""
+                                if (lyric_alt) {
+                                    update_line += " | " + lyric_alt
+                                }
+                                break
+                            case 3:
+                                if (lyric_alt) {
+                                    update_line = lyric_alt + " | " + lyric_text
+                                } else {
+                                    update_line = lyric_text || ""
+                                }
+                                break
                         }
-                        text.text = lyric
-                        updateLayoutSize()
+                        if (update_line.length > plasmoid.configuration.characterLimit) {
+                            update_line = update_line.slice(0, plasmoid.configuration.characterLimit) + "..."
+                        }
+                        text.text = update_line
+                        oneLineLayout.updateLayoutSize()
                         break
                 }
             }
@@ -60,7 +83,7 @@ PlasmoidItem {
                     } else {
                         text.text = ""
                     }
-                    updateLayoutSize()
+                    oneLineLayout.updateLayoutSize()
                     socket.active = false
                     delay(500, () => {
                         if (socket.active == false) {
@@ -69,30 +92,19 @@ PlasmoidItem {
                     })
                 } else if (status == WebSocket.Open) {
                     // Send config
-                    const providerMap = Object.assign({
-                        "mpris2_text": 0,
-                        "file": 1,
-                        "yesplaymusic": 2,
-                        "netease_trackid": 3,
-                        "feeluown_netease": 4,
-                        "netease": 5
-                    })
                     const configString = JSON.stringify({
-                        verbose: plasmoid.configuration.verbose,
-                        tlyric_mode: plasmoid.configuration.tlyricMode,
                         disabled_players: plasmoid.configuration.disabledPlayers.split(","),
-                        enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(",").map(p => providerMap[p]),
+                        enabled_lyric_providers: plasmoid.configuration.enabledLyricProviders.split(","),
                         online_search_pattern: plasmoid.configuration.onlineSearchPattern,
                         disabled_folders: plasmoid.configuration.disabledFolders.split("\n"),
-                        online_search_timeout: plasmoid.configuration.onlineSearchTimeout,
+                        online_search_timeout_secs: plasmoid.configuration.onlineSearchTimeout,
                         online_search_retry: plasmoid.configuration.onlineSearchRetry,
-                        max_retries: 3,  // Not configurable
-                        lyric_search_folder: plasmoid.configuration.lyricSearchFolder || "~/User/Music/lrc",
-                        alt_folder_exists: false,
+                        online_search_max_retries: plasmoid.configuration.onlineSearchMaxRetries,
+                        lyric_search_folder: plasmoid.configuration.lyricSearchFolder || "~/Music/lrc",
                     })
                     const xhr = new XMLHttpRequest()
                     console.log("[lyrica] Updating config")
-                    xhr.open("POST", "http://127.0.0.1:15649/config/update", true)
+                    xhr.open("POST", "http://127.0.0.1:15650/config/update", true)
                     xhr.setRequestHeader("Content-Type", "application/json")
                     xhr.onreadystatechange = () => {
                         if (xhr.readyState == 4) {
@@ -159,7 +171,7 @@ PlasmoidItem {
 
 	    Plasma5Support.DataSource {
 	        id: backendExecutable
-	        readonly property string command: "bash -c '$HOME/.local/share/plasma/plasmoids/ink.chyk.LyricaPlasmoid/contents/bin/lyrica'"
+	        readonly property string command: "bash -c '$HOME/.local/share/plasma/plasmoids/ink.chyk.lyricakde/contents/bin/lyrica'"
 		    engine: "executable"
 		    connectedSources: []
 		    onSourceConnected: {
@@ -175,7 +187,6 @@ PlasmoidItem {
 
 		Component.onCompleted: {
             backendExecutable.connectSource(backendExecutable.command)
-            // TODO: use relative path
 		}
     }
 }
