@@ -1,4 +1,7 @@
+use futures_util::FutureExt;
+use futures_util::future::BoxFuture;
 use futures_util::stream::StreamExt;
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::fmt;
 use tokio::sync::broadcast::{Sender, channel};
@@ -9,6 +12,14 @@ use crate::messages::ChannelMessage;
 use crate::player::lyric_session::SessionManager;
 use crate::player::mpris_metadata::Metadata;
 use crate::player::{MPRIS_PREFIX, MprisListener, dbus_proxies::*};
+
+lazy_static! {
+    // Players that not emitting seeked signal
+    // So we have to keep polling position to detect seek
+    pub(crate) static ref QUIRK_PLAYERS: Vec<String> = vec![
+        "elisa".to_string(),
+    ];
+}
 
 #[derive(Debug, Clone)]
 pub(crate) enum PlaybackEvent {
@@ -69,7 +80,19 @@ impl MprisListener {
 
         // start listening for seeked signal
         let pbtx2 = pbtx.clone();
-        let listen_seeked_handle = self.start_listen_seeked(service_name.as_str(), pbtx2);
+        let listen_seeked_handle: BoxFuture<'_, zbus::Result<()>> =
+            if QUIRK_PLAYERS.iter().any(|p| player_id.starts_with(p)) {
+                // start polling position if player is in quirk list
+                if self.config.read().await.verbose {
+                    // TODO: migrate to rust log crate
+                    println!("Entering polling mode because of player quirks, may cause high latency");
+                }
+                self.start_poll_position(service_name.as_str(), pbtx2)
+                    .boxed()
+            } else {
+                self.start_listen_seeked(service_name.as_str(), pbtx2)
+                    .boxed()
+            };
 
         drop(pbtx);
 
@@ -125,6 +148,30 @@ impl MprisListener {
         }
 
         Ok(())
+    }
+
+    async fn start_poll_position<'a>(
+        &self,
+        service_name: &'a str,
+        pbtx: Sender<PlaybackEvent>,
+    ) -> zbus::Result<()> {
+        let mut position = 0;
+        loop {
+            let new_position = self
+                .player_proxy(service_name)
+                .await?
+                .position()
+                .await
+                .ok()
+                .unwrap_or(0);
+            if new_position != position {
+                // manually emit seeked signal
+                pbtx.send(PlaybackEvent::Seek((new_position / 1000) as u64))
+                    .ok();
+                position = new_position;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        }
     }
 
     async fn bootstrap_lyric_session<'a>(
@@ -216,9 +263,7 @@ impl MprisListener {
                         }
                     }
                 }
-                _ => {
-                    println!("Other property changed: {} = {:?}", key, value);
-                }
+                _ => continue,
             }
         }
 

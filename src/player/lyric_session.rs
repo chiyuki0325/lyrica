@@ -68,6 +68,7 @@ impl SessionManager {
         let mut anchor_music_time = 0;
 
         let lyric_lines = lyric.lines.len();
+        let mut last_position = usize::max_value();
         let mut position = 0;
         let mut rate = 1.0;
         let mut paused = false;
@@ -93,15 +94,15 @@ impl SessionManager {
             tokio::select! {
                 _ = timer => {
                     if position < lyric_lines {
-                        let current_line = &lyric.lines[position];
+                            let current_line = &lyric.lines[position];
 
-                        msgtx.send(ChannelMessage::update_lyric_line(
-                            current_line.time,
-                            current_line.text.clone(),
-                            current_line.alt.clone(),
-                        )).ok();
+                            msgtx.send(ChannelMessage::update_lyric_line(
+                                current_line.time,
+                                current_line.text.clone(),
+                                current_line.alt.clone(),
+                            )).ok();
 
-                        position += 1;
+                            position += 1;
                     }
                 }
 
@@ -119,19 +120,22 @@ impl SessionManager {
                             position = lyric.lines.iter().position(|line| line.time > new_time).unwrap_or(lyric_lines);
 
                             // fix: before first line
-                            if position == 0 {
-                                msgtx.send(ChannelMessage::update_lyric_line(
-                                    0,
-                                    String::new(),
-                                    None,
-                                )).ok();
-                            } else {
-                                let line = &lyric.lines[position.saturating_sub(1)];
-                                msgtx.send(ChannelMessage::update_lyric_line(
-                                    line.time,
-                                    line.text.clone(),
-                                    line.alt.clone(),
-                                )).ok();
+                            if position != last_position {
+                                last_position = position;
+                                if position == 0 {
+                                    msgtx.send(ChannelMessage::update_lyric_line(
+                                        0,
+                                        String::new(),
+                                        None,
+                                    )).ok();
+                                } else {
+                                    let line = &lyric.lines[position.saturating_sub(1)];
+                                    msgtx.send(ChannelMessage::update_lyric_line(
+                                        line.time,
+                                        line.text.clone(),
+                                        line.alt.clone(),
+                                    )).ok();
+                                }
                             }
                         }
                         Ok(PlaybackEvent::Pause) => {
