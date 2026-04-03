@@ -36,7 +36,7 @@ impl SessionManager {
         if rate == 1.0 {
             elapsed_ms
         } else {
-            ((elapsed_ms as f64) * rate) as u64
+            ((elapsed_ms as f64) / rate) as u64
         }
     }
 
