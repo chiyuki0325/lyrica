@@ -1,3 +1,4 @@
+use log::info;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::sync::broadcast::{Receiver, error::RecvError};
@@ -22,10 +23,7 @@ pub(crate) async fn start_manage_state(
     loop {
         match rx.recv().await {
             Ok(msg) => {
-                let is_verbose = config.read().await.verbose;
-                if is_verbose {
-                    println!("{}", &msg);
-                }
+                info!("{}", &msg);
 
                 match msg {
                     ChannelMessage::UpdateMusicInfo(data) => {
@@ -42,9 +40,11 @@ pub(crate) async fn start_manage_state(
                 }
             }
             Err(RecvError::Lagged(n)) => {
+                info!("State management lagged by {} messages", n);
                 continue;
             }
             Err(RecvError::Closed) => {
+                info!("State management channel closed");
                 break;
             }
         }

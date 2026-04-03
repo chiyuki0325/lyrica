@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use log::error;
 use tokio::{sync::mpsc::channel, task::JoinHandle};
 
 use super::{MprisListener, player_discovery::PlayerEvent};
@@ -39,7 +40,7 @@ impl MprisListener {
                 let self_for_observation = this.clone();
                 handle = Some(tokio::spawn(async move {
                     if let Err(e) = self_for_observation.start_observation(player_id).await {
-                        eprintln!("Error in MPRIS observation: {}", e);
+                        error!("Error in MPRIS observation: {}", e);
                     }
                 }));
             }

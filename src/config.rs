@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
-    pub verbose: bool,
     pub disabled_players: Vec<String>,
     pub enabled_lyric_providers: Vec<usize>,
     pub online_search_pattern: u8,
@@ -16,7 +15,6 @@ pub struct Config {
 impl Config {
     pub fn new() -> Self {
         Self {
-            verbose: true,
             disabled_players: "firefox,chromium,plasma-browser-integration,kdeconnect"
                 .split(',')
                 .map(|it| it.trim().to_string())

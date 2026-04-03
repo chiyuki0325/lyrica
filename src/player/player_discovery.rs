@@ -1,4 +1,5 @@
 use futures_util::stream::StreamExt;
+use log::info;
 use tokio::sync::mpsc::Sender;
 
 use super::{MPRIS_PREFIX, MprisListener, dbus_proxies::*};
@@ -55,9 +56,7 @@ impl MprisListener {
             tx.send(PlayerEvent::Added(player_id.to_string()))
                 .await
                 .ok();
-            if self.config.read().await.verbose {
-                println!("Player added: {}", player_id);
-            }
+            info!("Player added: {}", player_id);
         }
     }
 
@@ -65,8 +64,6 @@ impl MprisListener {
         tx.send(PlayerEvent::Removed(player_id.to_string()))
             .await
             .ok();
-        if self.config.read().await.verbose {
-            println!("Player removed: {}", player_id);
-        }
+        info!("Player removed: {}", player_id);
     }
 }

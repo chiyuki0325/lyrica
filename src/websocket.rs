@@ -3,6 +3,7 @@ use crate::messages::*;
 use actix::{Actor, AsyncContext, Handler, StreamHandler};
 use actix_web::{Error, HttpRequest, HttpResponse, web};
 use actix_web_actors::ws;
+use log::{error, info};
 use serde::Serialize;
 use std::sync::Arc;
 use tokio::sync::{RwLock, broadcast};
@@ -57,16 +58,13 @@ impl Handler<ChannelMessage> for LyricaSocket {
 
     fn handle(&mut self, msg: ChannelMessage, ctx: &mut Self::Context) {
         // convert message to WebSocketPacket and send to client
-
-        if self.config.blocking_read().verbose {
-            println!("{}", &msg);
-        }
+        info!("{}", &msg);
 
         let packet = WebSocketPacket::from(msg);
         if let Ok(text) = serde_json::to_string(&packet) {
             ctx.text(text);
         } else {
-            eprintln!("Failed to serialize WebSocketPacket");
+            error!("Failed to serialize WebSocketPacket");
         }
     }
 }

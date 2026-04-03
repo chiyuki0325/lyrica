@@ -2,6 +2,7 @@ use futures_util::FutureExt;
 use futures_util::future::BoxFuture;
 use futures_util::stream::StreamExt;
 use lazy_static::lazy_static;
+use log::info;
 use std::collections::HashMap;
 use std::fmt;
 use tokio::sync::broadcast::{Sender, channel};
@@ -87,7 +88,7 @@ impl MprisListener {
         // start listening for property changes
         let pbtx1 = pbtx.clone();
         let listen_properties_handle =
-            self.start_listen_properties(&player_proxy, &player_properties_proxy, ssmgr, pbtx1);
+            self.start_listen_properties(&player_proxy, &service_name, ssmgr, pbtx1);
 
         // start listening for seeked signal
         let pbtx2 = pbtx.clone();
@@ -96,18 +97,13 @@ impl MprisListener {
             .any(|p| player_id.starts_with(p))
         {
             // start polling position if player is in polling mode list
-            if self.config.read().await.verbose {
-                // TODO: migrate to rust log crate
-                println!(
-                    "Entering polling mode because of the weird behavior of player {}, high latency expected",
-                    player_id
-                );
-            }
-            self.start_poll_position(&player_proxy, pbtx2)
-                .boxed()
+            info!(
+                "Entering polling mode because of the weird behavior of player {}, high latency expected",
+                player_id
+            );
+            self.start_poll_position(&player_proxy, pbtx2).boxed()
         } else {
-            self.start_listen_seeked(&player_proxy, pbtx2)
-                .boxed()
+            self.start_listen_seeked(&player_proxy, pbtx2).boxed()
         };
 
         drop(pbtx);
@@ -120,10 +116,11 @@ impl MprisListener {
     async fn start_listen_properties<'a>(
         &self,
         player_proxy: &PlayerProxy<'a>,
-        player_properties_proxy: &PlayerPropertiesProxy<'a>,
+        service_name: &str,
         mut ssmgr: SessionManager,
         pbtx: Sender<PlaybackEvent>,
     ) -> zbus::Result<()> {
+        let player_properties_proxy = self.player_properties_proxy(service_name).await?;
         let mut properties_stream = player_properties_proxy.receive_properties_changed().await?;
 
         while let Some(signal) = properties_stream.next().await {
@@ -235,7 +232,7 @@ impl MprisListener {
         let mut events = Vec::new();
 
         for (key, value) in changed_properties.into_iter() {
-            // println!("Property changed: {} = {:?}", key, value);
+            // info!("Property changed: {} = {:?}", key, value);
             match key.as_str() {
                 "Metadata" => {
                     events.push(PlaybackEvent::Reset());

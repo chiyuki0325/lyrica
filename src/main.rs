@@ -1,15 +1,16 @@
 mod config;
+mod helpers;
 mod lyric_parser;
+mod lyric_providers;
+mod messages;
 mod player;
+mod state;
 mod web_routes;
 mod websocket;
-mod lyric_providers;
-mod helpers;
-mod messages;
-mod state;
 
 use actix_web::{App, HttpServer, web};
 use lazy_static::lazy_static;
+use log::info;
 use tokio::sync::{RwLock, broadcast};
 
 use crate::config::Config;
@@ -22,10 +23,14 @@ lazy_static! {
     // TODO: make this configurable in cmd args
 }
 
-
 // multithreaded runtime is too heavy so we use single-threaded runtime
-#[tokio::main(flavor = "current_thread")] 
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> std::io::Result<()> {
+    // initialize logging
+    env_logger::Builder::from_default_env()
+        .target(env_logger::Target::Stdout)
+        .init();
+
     let (tx, rx) = broadcast::channel::<ChannelMessage>(6);
 
     let config = Config::new();
@@ -63,6 +68,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web_data_state.clone())
             .route("/ws", web::get().to(websocket::ws_index))
     })
+    .workers(1)
     .bind(format!("127.0.0.1:{}", *PORT))?
     .run()
     .await

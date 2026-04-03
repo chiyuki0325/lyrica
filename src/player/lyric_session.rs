@@ -1,3 +1,4 @@
+use log::info;
 use std::future::pending;
 use std::sync::Arc;
 use std::time::Duration;
@@ -120,10 +121,8 @@ impl SessionManager {
                 }
 
                 event = pbrx.recv() => {
-                    if config.read().await.verbose {
-                        if let Ok(ev) = &event && !matches!(ev, PlaybackEvent::Poll(_)) {
-                            println!("{}", ev.to_string());
-                        }
+                    if let Ok(ev) = &event && !matches!(ev, PlaybackEvent::Poll(_)) {
+                        info!("{}", ev.to_string());
                     }
                     match event {
                         Ok(PlaybackEvent::Seek(new_time)) => {

@@ -1,5 +1,6 @@
 use crate::{config::Config, messages::ChannelMessage};
 use actix_web::{HttpResponse, web};
+use log::{error, info};
 use tokio::sync::{RwLock, broadcast};
 
 pub(crate) async fn update_config(
@@ -9,12 +10,7 @@ pub(crate) async fn update_config(
 ) -> HttpResponse {
     let new_config = config_req.into_inner();
 
-    {
-        if config.read().await.verbose {
-            println!("Updating config: {:?}", &new_config);
-        }
-        // read lock dropped here
-    }
+    info!("Updating config: {:?}", &new_config);
 
     let mut config = config.write().await;
     *config = new_config.clone();
@@ -22,7 +18,7 @@ pub(crate) async fn update_config(
     // Send the updated config to all connected clients
     let channel_message = ChannelMessage::UpdateConfig(new_config);
     if let Err(e) = tx.send(channel_message) {
-        eprintln!("Failed to send config update: {}", e);
+        error!("Failed to send config update: {}", e);
     }
 
     HttpResponse::Ok()

@@ -1,5 +1,6 @@
 use crate::config::Config;
 use std::sync::Arc;
+use log::error;
 use tokio::sync::{RwLock, broadcast::Sender};
 use zbus::Connection;
 use crate::messages::ChannelMessage;
@@ -34,7 +35,7 @@ pub(crate) async fn start_mpris_loop(
     loop {
         let the_loop = start_mpris_loop_once(config.clone(), tx.clone()).await;
         if let Err(e) = the_loop {
-            eprintln!("Error in MPRIS loop: {}. Restarting in 5 seconds...", e);
+            error!("Error in MPRIS loop: {}. Restarting in 5 seconds...", e);
         }
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
