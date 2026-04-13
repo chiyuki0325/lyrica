@@ -24,9 +24,11 @@ pub(crate) struct SessionManager {
 }
 
 impl Drop for SessionManager {
-    // Detect leak, stops leak
     fn drop(&mut self) {
+        // stop lyric timer session if still running
         self.handle.take().map(|h| h.abort());
+        // push empty lyric to clear displayed lyric
+        self.msgtx.send(ChannelMessage::update_lyric_line(0, String::new(), None)).ok();
     }
 }
 
@@ -58,6 +60,8 @@ impl SessionManager {
     pub async fn start_session(&mut self, lyric: Lyric) {
         // terminate existing session if exists
         self.handle.take().map(|h| h.abort());
+        // push empty lyric to clear displayed lyric
+        self.msgtx.send(ChannelMessage::update_lyric_line(0, String::new(), None)).ok();
 
         // start new session
         let msgtx = self.msgtx.clone();
