@@ -5,6 +5,16 @@ pub(crate) struct Lyric {
     pub lines: Vec<LyricLine>,
 }
 
+impl Lyric {
+    pub fn new() -> Self {
+        Self { lines: Vec::new() }
+    }
+
+    pub fn add_line(&mut self, line: LyricLine) {
+        self.lines.push(line);
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct LyricLine {
     pub time: u64, // in milliseconds

@@ -69,6 +69,7 @@ impl FileLyricProvider {
 impl LyricProvider for FileLyricProvider {
     async fn get_lyric(
         &self,
+        _player_id: &str,
         metadata: &Metadata,
         config: Arc<RwLock<Config>>,
     ) -> Result<Lyric, LyricProviderError> {

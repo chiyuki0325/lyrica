@@ -14,6 +14,7 @@ pub(crate) struct Mpris2TextLyricProvider;
 impl LyricProvider for Mpris2TextLyricProvider {
     async fn get_lyric(
         &self,
+        _player_id: &str,
         metadata: &Metadata,
         _config: Arc<RwLock<Config>>,
     ) -> Result<Lyric, LyricProviderError> {

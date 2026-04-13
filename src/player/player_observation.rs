@@ -2,7 +2,7 @@ use futures_util::FutureExt;
 use futures_util::future::BoxFuture;
 use futures_util::stream::StreamExt;
 use lazy_static::lazy_static;
-use log::{info, debug};
+use log::{debug, info};
 use std::collections::HashMap;
 use std::fmt;
 use tokio::sync::broadcast::{Sender, channel};
@@ -83,12 +83,18 @@ impl MprisListener {
         .await;
 
         // try spawn lyric session if song is already playing
-        self.bootstrap_lyric_session(&player_proxy, &mut ssmgr).await;
+        self.bootstrap_lyric_session(&player_id, &player_proxy, &mut ssmgr)
+            .await;
 
         // start listening for property changes
         let pbtx1 = pbtx.clone();
-        let listen_properties_handle =
-            self.start_listen_properties(&player_proxy, properties_stream, ssmgr, pbtx1);
+        let listen_properties_handle = self.start_listen_properties(
+            &player_id,
+            &player_proxy,
+            properties_stream,
+            ssmgr,
+            pbtx1,
+        );
 
         // start listening for seeked signal
         let pbtx2 = pbtx.clone();
@@ -115,6 +121,7 @@ impl MprisListener {
 
     async fn start_listen_properties<'a>(
         &self,
+        player_id: &str,
         player_proxy: &PlayerProxy<'a>,
         mut properties_stream: PropertiesChangedStream,
         mut ssmgr: SessionManager,
@@ -130,7 +137,8 @@ impl MprisListener {
                 match event {
                     PlaybackEvent::Reset() => {
                         // if song changed, restart lyric session
-                        self.bootstrap_lyric_session(player_proxy, &mut ssmgr).await;
+                        self.bootstrap_lyric_session(player_id, player_proxy, &mut ssmgr)
+                            .await;
                     }
                     _ => {
                         pbtx.send(event).ok();
@@ -178,6 +186,7 @@ impl MprisListener {
 
     async fn bootstrap_lyric_session<'a>(
         &self,
+        player_id: &str,
         player_proxy: &PlayerProxy<'a>,
         ssmgr: &mut SessionManager,
     ) -> Option<()> {
@@ -189,7 +198,8 @@ impl MprisListener {
         if metadata.has_song_info() {
             debug!("Bootstrapping lyric session with metadata: {:?}", metadata);
             // song playing when we start observation, start lyric session immediately
-            let lyric = try_get_lyric_from_providers(&metadata, self.config.clone()).await;
+            let lyric =
+                try_get_lyric_from_providers(player_id, &metadata, self.config.clone()).await;
 
             if let Some(lyric) = lyric {
                 ssmgr.start_session(lyric).await;

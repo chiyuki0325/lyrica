@@ -19,7 +19,7 @@ impl Config {
                 .split(',')
                 .map(|it| it.trim().to_string())
                 .collect(),
-            enabled_lyric_providers: "Mpris2Text,File,YesPlayMusic,NeteaseTrackID,FeelUOwnNetease,Netease"
+            enabled_lyric_providers: "Mpris2Text,File,NeteaseTrackID,YesPlayMusic,SPlayer,FeelUOwnNetease,Netease"
                 .split(',')
                 .map(|it| it.trim().to_string())
                 .collect(),

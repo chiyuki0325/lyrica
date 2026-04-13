@@ -11,6 +11,7 @@ use tokio::sync::{OnceCell, RwLock};
 use crate::config::Config;
 use crate::lyric_parser::Lyric;
 use crate::player::mpris_metadata::Metadata;
+use crate::helpers::StringVecExt;
 
 use crate::lyric_providers::feeluown_netease::FeelUOwnNeteaseLyricProvider;
 use crate::lyric_providers::file::FileLyricProvider;
@@ -18,7 +19,8 @@ use crate::lyric_providers::mpris2_text::Mpris2TextLyricProvider;
 use crate::lyric_providers::netease::NeteaseLyricProvider;
 use crate::lyric_providers::netease_trackid::NeteaseTrackIDLyricProvider;
 use crate::lyric_providers::yesplaymusic::YesPlayMusicLyricProvider;
-use crate::helpers::StringVecExt;
+use crate::lyric_providers::splayer::SPlayerLyricProvider;
+
 
 pub(crate) mod feeluown_netease;
 pub(crate) mod file;
@@ -26,6 +28,7 @@ pub(crate) mod mpris2_text;
 pub(crate) mod netease;
 pub(crate) mod netease_trackid;
 pub(crate) mod yesplaymusic;
+pub(crate) mod splayer;
 
 lazy_static! {
     static ref MUSIC_API: OnceCell<ncm_api::MusicApi> = OnceCell::new();
@@ -57,6 +60,7 @@ enum LyricProviderError {
 trait LyricProvider: Send + Sync {
     async fn get_lyric(
         &self,
+        player_id: &str,
         metadata: &Metadata,
         config: Arc<RwLock<Config>>,
     ) -> Result<Lyric, LyricProviderError>;
@@ -76,6 +80,7 @@ lazy_static! {
             Box::new(FileLyricProvider::default()),
             Box::new(YesPlayMusicLyricProvider::default()),
             Box::new(NeteaseTrackIDLyricProvider::default()),
+            Box::new(SPlayerLyricProvider::default()),
             Box::new(FeelUOwnNeteaseLyricProvider::default()),
             Box::new(NeteaseLyricProvider::default()),
         ];
@@ -84,6 +89,7 @@ lazy_static! {
 }
 
 pub(crate) async fn try_get_lyric_from_providers(
+    player_id: &str,
     metadata: &Metadata,
     config: Arc<RwLock<Config>>,
 ) -> Option<Lyric> {
@@ -94,7 +100,7 @@ pub(crate) async fn try_get_lyric_from_providers(
             continue;
         }
         info!("Trying lyric provider: {}", name);
-        match provider.get_lyric(metadata, config.clone()).await {
+        match provider.get_lyric(player_id, metadata, config.clone()).await {
             Ok(lyric) => return Some(lyric),
             Err(LyricProviderError::Aborted) => return None,
             Err(_) => continue,

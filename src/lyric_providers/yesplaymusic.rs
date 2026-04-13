@@ -61,9 +61,11 @@ impl YesPlayMusicLyricProvider {
 impl LyricProvider for YesPlayMusicLyricProvider {
     async fn get_lyric(
         &self,
+        _player_id: &str,
         metadata: &Metadata,
         _config: Arc<RwLock<Config>>,
     ) -> Result<Lyric, LyricProviderError> {
+        // TODO: judge player_id to make sure it's YesPlayMusic
         let url = metadata.url().ok_or(LyricProviderError::NotSupported)?;
         if url.starts_with("/trackid/") {
             if let Some(track_id) = metadata.mpris_track_id() {

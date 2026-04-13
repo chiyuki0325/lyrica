@@ -17,6 +17,7 @@ impl NeteaseTrackIDLyricProvider {}
 impl LyricProvider for NeteaseTrackIDLyricProvider {
     async fn get_lyric(
         &self,
+        _player_id: &str,
         metadata: &Metadata,
         config: Arc<RwLock<Config>>,
     ) -> Result<Lyric, LyricProviderError> {

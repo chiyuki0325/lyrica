@@ -14,6 +14,7 @@ pub(crate) struct FeelUOwnNeteaseLyricProvider;
 impl LyricProvider for FeelUOwnNeteaseLyricProvider {
     async fn get_lyric(
         &self,
+        _player_id: &str,
         metadata: &Metadata,
         config: Arc<RwLock<Config>>,
     ) -> Result<Lyric, LyricProviderError> {
