@@ -196,7 +196,8 @@ impl MprisListener {
         let position = player_proxy.position().await.ok().unwrap_or(0);
 
         if metadata.has_song_info() {
-            debug!("Bootstrapping lyric session with metadata: {:?}", metadata);
+            info!("Bootstrapping lyric session with metadata: {:?}", metadata);
+            info!("Playback status: {:?}, Rate: {}, Position: {} us", playback_status, rate, position);
             // song playing when we start observation, start lyric session immediately
             let lyric =
                 try_get_lyric_from_providers(player_id, &metadata, self.config.clone()).await;
@@ -208,13 +209,13 @@ impl MprisListener {
                 self.push_music_info(metadata).await;
 
                 // push playback status to lyric session
-                let _ = ssmgr.send(PlaybackEvent::Seek((position / 1000) as u64));
-                let _ = ssmgr.send(PlaybackEvent::RateChange(rate));
-                let _ = ssmgr.send(match playback_status {
+                ssmgr.send(PlaybackEvent::Seek((position / 1000) as u64)).await;
+                ssmgr.send(PlaybackEvent::RateChange(rate)).await;
+                ssmgr.send(match playback_status {
                     PlaybackStatus::Playing => PlaybackEvent::Play,
                     PlaybackStatus::Paused => PlaybackEvent::Pause,
                     PlaybackStatus::Stopped => PlaybackEvent::Pause,
-                });
+                }).await;
 
                 ()
             }
