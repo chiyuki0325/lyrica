@@ -13,7 +13,7 @@ Because the project uses relative path to run the backend, so desktops installed
 ```bash
 git clone https://github.com/chiyuki0325/lyrica --branch=v1
 cd lyrica
-git checkout $(git tag --list "v*" | tail -1)
+git checkout $(git tag --list "v*" | sort -V | tail -1)
 ```
 
 #### Install dependencies

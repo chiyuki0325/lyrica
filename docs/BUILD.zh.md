@@ -11,7 +11,7 @@ Lyrica 仅支持 Plasma 6.0 或更高版本。
 ```bash
 git clone https://github.com/chiyuki0325/lyrica --branch=v1
 cd lyrica
-git checkout $(git tag --list "v*" | tail -1)
+git checkout $(git tag --list "v*" | sort -V | tail -1)
 ```
 
 #### 安装依赖
