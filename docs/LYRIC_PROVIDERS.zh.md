@@ -18,6 +18,10 @@ Lyrica 使用以下歌词源来获取播放器的歌词。
 
 YesPlayMusic 是网易云音乐的第三方客户端。当使用此播放器时，Lyrica 可以从 YesPlayMusic 提供的 API 获取歌词。
 
+## `SPlayer`
+
+SPlayer 是网易云音乐的第三方客户端。当使用此播放器时，Lyrica 可以从 SPlayer 提供的 API 获取歌词。
+
 ## `NeteaseTrackID`
 
 这个歌词源适用于支持在 mpris2 元数据中提供 track ID 的第三方网易云客户端，如 ElectronNCM 和 NetEase Cloud Music GTK4。
