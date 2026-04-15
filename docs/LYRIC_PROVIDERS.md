@@ -20,6 +20,10 @@ Supports the following file formats: mp3, flac, lrc.
 
 YesPlayMusic is a third-party player for NetEase Cloud Music. Lyrica can get lyrics from the API provided by YesPlayMusic when using this player.
 
+## `SPlayer`
+
+SPlayer is a third-party player for NetEase Cloud Music. Lyrica can get lyrics from the API provided by SPlayer when using this player.
+
 ## `NeteaseTrackID`
 
 This lyric provider is available to third-party NetEase Cloud Music players that expose music track IDs like ElectronNCM and NetEase Cloud Music GTK4.

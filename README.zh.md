@@ -26,6 +26,7 @@ Lyrica 是一个简洁轻量的 Linux 桌面歌词显示软件。
     - [x] Mpris2 asText
     - [x] 网易云音乐歌曲 ID
     - [x] YesPlayMusic
+  - [x] SPlayer
 - [x] KDE Plasma 挂件前端
 - [ ] ~~GNOME Shell 拓展前端~~
   由于已经有类似的项目，比如 desktop-lyrics 和 osdlyrics，GNOME Shell 拓展暂时不会优先考虑。
