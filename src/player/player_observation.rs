@@ -136,6 +136,8 @@ impl MprisListener {
             {
                 match event {
                     PlaybackEvent::Reset() => {
+                        // Always clear stale session first so no-lyric songs do not keep old lyric.
+                        ssmgr.stop_session();
                         // if song changed, restart lyric session
                         self.bootstrap_lyric_session(player_id, player_proxy, &mut ssmgr)
                             .await;
