@@ -68,5 +68,11 @@
         <entry name="lyricSearchFolder" type="String">
             <default/>
         </entry>
+        <entry name="lyricCacheEnabled" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="lyricCacheTtlDays" type="Int">
+            <default>30</default>
+        </entry>
     </group>
 </kcfg>

@@ -1,5 +1,6 @@
 mod config;
 mod helpers;
+mod lyric_cache;
 mod lyric_parser;
 mod lyric_providers;
 mod messages;
@@ -8,9 +9,13 @@ mod state;
 mod web_routes;
 mod websocket;
 
+use std::time::Duration;
+
 use actix_web::{App, HttpServer, web};
 use lazy_static::lazy_static;
 use tokio::sync::{RwLock, broadcast};
+
+use crate::lyric_cache::LYRIC_CACHE;
 
 use crate::config::Config;
 use crate::messages::ChannelMessage;
@@ -43,6 +48,16 @@ async fn main() -> std::io::Result<()> {
         web_data_config.clone().into_inner(),
         tx.clone(),
     ));
+
+    // start lyric cache cleanup background task
+    let cache_config = web_data_config.clone().into_inner();
+    tokio::spawn(async move {
+        loop {
+            let ttl = cache_config.read().await.lyric_cache_ttl_days;
+            LYRIC_CACHE.cleanup_expired(ttl);
+            tokio::time::sleep(Duration::from_secs(86400)).await;
+        }
+    });
 
     // start state management in background task
     tokio::spawn(start_manage_state(

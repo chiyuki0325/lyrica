@@ -10,6 +10,8 @@ pub struct Config {
     pub online_search_retry: bool,
     pub online_search_max_retries: u8,
     pub lyric_search_folder: String,
+    pub lyric_cache_enabled: bool,
+    pub lyric_cache_ttl_days: u32,
 }
 
 impl Config {
@@ -31,6 +33,8 @@ impl Config {
             online_search_retry: true,
             online_search_max_retries: 3,
             lyric_search_folder: "~/Music/lrc".to_string(),
+            lyric_cache_enabled: true,
+            lyric_cache_ttl_days: 30,
         }
     }
 }

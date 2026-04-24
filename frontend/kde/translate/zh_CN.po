@@ -97,6 +97,14 @@ msgstr ""
 msgid "Alternative folder to search for .lrc files:"
 msgstr "搜索 .lrc 文件的备用文件夹："
 
+#: ../contents/ui/configBackend.qml
+msgid "Cache online lyrics to disk"
+msgstr "将在线歌词缓存到磁盘"
+
+#: ../contents/ui/configBackend.qml
+msgid "Cache TTL (days, 0 = never expire):"
+msgstr "缓存有效期（天，0 表示永不过期）："
+
 #: ../contents/ui/configFrontend.qml
 msgid "Lyric translation mode:"
 msgstr "歌词翻译显示模式："

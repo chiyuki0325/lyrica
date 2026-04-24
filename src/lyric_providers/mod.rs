@@ -9,6 +9,7 @@ use std::time::Duration;
 use tokio::sync::{OnceCell, RwLock};
 
 use crate::config::Config;
+use crate::lyric_cache::LYRIC_CACHE;
 use crate::lyric_parser::Lyric;
 use crate::player::mpris_metadata::Metadata;
 use crate::helpers::StringVecExt;
@@ -69,6 +70,51 @@ trait LyricProvider: Send + Sync {
         let full_name = type_name::<Self>();
         full_name.split("::").last().unwrap_or(full_name).trim_end_matches("LyricProvider")
     }
+}
+
+/// Fetch lyric from Netease by track ID, with cache read/write and retry.
+async fn fetch_netease_lyric(
+    music_id: u64,
+    config: Arc<RwLock<Config>>,
+) -> Result<Lyric, LyricProviderError> {
+    let conf = config.read().await;
+    let cache_enabled = conf.lyric_cache_enabled;
+    let ttl_days = conf.lyric_cache_ttl_days;
+    let retry = !conf.online_search_retry;
+    let max_retries = conf.online_search_max_retries;
+    let timeout = conf.online_search_timeout_secs;
+    drop(conf);
+
+    if cache_enabled {
+        if let Some((lrc, tlyric)) = LYRIC_CACHE.get(music_id, ttl_days) {
+            info!("Lyric for netease/{} loaded from disk cache", music_id);
+            return Lyric::try_from((lrc, tlyric)).map_err(|_| LyricProviderError::NotFound);
+        }
+    }
+
+    let music_api = use_music_api(timeout)
+        .await
+        .ok_or(LyricProviderError::NotSupported)?;
+
+    let mut try_count = 0;
+    while try_count < max_retries {
+        info!("Fetching lyric for netease/{} from network (attempt {}/{})", music_id, try_count + 1, max_retries);
+        if let Ok(result) = music_api.song_lyric(music_id).await {
+            let lrc = result.lyric.join("\n");
+            let tlyric = result.tlyric.join("\n");
+            if cache_enabled {
+                LYRIC_CACHE.put(music_id, &lrc, &tlyric);
+            }
+            return Lyric::try_from((lrc, tlyric)).map_err(|_| LyricProviderError::NotFound);
+        }
+        if retry {
+            try_count += 1;
+        } else {
+            break;
+        }
+    }
+
+    Err(LyricProviderError::Aborted)
 }
 
 type LyricProviderList = Vec<Box<dyn LyricProvider>>;

@@ -30,8 +30,9 @@ src/                      # Rust backend
     lyric_session.rs      # Real-time lyric synchronization (SessionManager)
     mpris_metadata.rs     # Metadata extraction helpers
     dbus_proxies.rs       # zbus D-Bus proxy definitions
+  lyric_cache.rs          # Disk lyric cache (read/write/cleanup)
   lyric_providers/        # Pluggable lyric sources
-    mod.rs                # Provider registry and orchestration
+    mod.rs                # Provider registry, orchestration, fetch_netease_lyric helper
     file.rs               # Local tags (ID3/Vorbis) + LRC files
     mpris2_text.rs        # MPRIS2 Lyrics property fallback
     netease.rs            # NetEase Cloud Music search
@@ -97,15 +98,31 @@ Music player (e.g. Elisa, Spotify)
 Providers are tried in order; the first successful response wins. Order is defined in `lyric_providers/mod.rs`. Providers can be enabled/disabled at runtime via `Config.enabled_lyric_providers`.
 
 Current providers (in default priority order):
-1. `file` — local ID3/Vorbis tags, then `~/Music/lrc/<title>.lrc`
-2. `mpris2_text` — MPRIS2 `xesam:asText` property
-3. `netease_trackid` — embedded NetEase track ID in tags
-4. `netease` — online NetEase Cloud Music search
-5. `yesplaymusic` — local YesPlayMusic API (localhost:10754)
-6. `feeluown_netease` — FeelUOwn Python integration
-7. `splayer` — SPlayer WebSocket (localhost:25885)
+1. `Mpris2Text` — MPRIS2 `xesam:asText` property
+2. `File` — local ID3/Vorbis tags, then `~/Music/lrc/<title>.lrc`
+3. `YesPlayMusic` — local YesPlayMusic API (localhost:10754)
+4. `NeteaseTrackID` — embedded NetEase track ID in MPRIS metadata
+5. `SPlayer` — SPlayer WebSocket (localhost:25885)
+6. `FeelUOwnNetease` — FeelUOwn Python integration
+7. `Netease` — online NetEase Cloud Music search
 
 When adding a new provider, implement the `LyricProvider` async trait in a new file under `lyric_providers/`, register it in `mod.rs`, and add its identifier to the default `enabled_lyric_providers` list in `config.rs`.
+
+### Lyric Cache
+
+`lyric_cache.rs` provides a disk cache for NetEase lyrics keyed by numeric track ID. Cache files are stored as JSON at:
+
+```
+$LYRICA_CACHE_DIR/netease/<id>.json          # if LYRICA_CACHE_DIR is set
+$XDG_CACHE_HOME/lyrica/netease/<id>.json     # else if XDG_CACHE_HOME is set
+~/.cache/lyrica/netease/<id>.json            # fallback
+```
+
+Each file contains `{ lrc, tlyric, cached_at }`. The `LYRIC_CACHE` singleton is initialized lazily on first use.
+
+Providers that call NetEase (`NeteaseTrackID`, `FeelUOwnNetease`, `Netease`) all go through the shared `fetch_netease_lyric(music_id, config)` function in `lyric_providers/mod.rs`, which handles cache lookup → network fetch → cache write in one place. This ensures the cache is shared across providers for the same track ID.
+
+A background task in `main.rs` runs `cleanup_expired` at startup and then every 24 hours, deleting entries older than `lyric_cache_ttl_days`.
 
 ### WebSocket Protocol
 
@@ -138,6 +155,8 @@ Runtime config is stored in `~/.config/lyrica/config.json` (created on first run
 | `online_search_timeout_secs` | `u64` | `10` | HTTP timeout |
 | `online_search_retry` | `bool` | `true` | Retry on failure |
 | `online_search_max_retries` | `u32` | `3` | Max retry attempts |
+| `lyric_cache_enabled` | `bool` | `true` | Enable disk lyric cache |
+| `lyric_cache_ttl_days` | `u32` | `30` | Cache TTL in days; `0` = never expire |
 
 ## Coding Conventions
 

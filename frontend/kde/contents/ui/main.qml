@@ -105,6 +105,8 @@ PlasmoidItem {
                         online_search_retry: plasmoid.configuration.onlineSearchRetry,
                         online_search_max_retries: plasmoid.configuration.onlineSearchMaxRetries,
                         lyric_search_folder: plasmoid.configuration.lyricSearchFolder || "~/Music/lrc",
+                        lyric_cache_enabled: plasmoid.configuration.lyricCacheEnabled,
+                        lyric_cache_ttl_days: plasmoid.configuration.lyricCacheTtlDays,
                     })
                     const xhr = new XMLHttpRequest()
                     console.log("[lyrica] Updating config")
