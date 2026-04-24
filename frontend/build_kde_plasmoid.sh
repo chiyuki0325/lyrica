@@ -16,7 +16,7 @@ cargo build --release --target "${arch}-unknown-linux-gnu"
 
 mkdir package
 cp -r frontend/kde/* package/
-sed -i "s/LYRICA_VERSION/${version}/g" package/contents/metadata.json
+sed -i "s/LYRICA_VERSION/${version}/g" package/metadata.json
 mkdir -p package/contents/bin/
 cp "target/${arch}-unknown-linux-gnu/release/lyrica" package/contents/bin/
 7z a -tzip "lyrica-plasmoid-v${version}-${distro}-${arch}.plasmoid" package/*
