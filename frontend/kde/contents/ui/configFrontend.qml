@@ -15,6 +15,7 @@ Kirigami.FormLayout {
     property alias cfg_showReconnectingText: showReconnectingText.checked
     property alias cfg_shouldUseDefaultThemeTextColor: shouldUseDefaultThemeTextColor.checked
     property alias cfg_configuredTextColor: configuredTextColor.color
+    property alias cfg_placeholderIconName: placeholderIconName.text
 
     ComboBox {
         Kirigami.FormData.label: i18n("Lyric translation mode:")
@@ -92,6 +93,12 @@ Kirigami.FormLayout {
         Kirigami.FormData.label: i18n("Custom text color:")
         enabled: !shouldUseDefaultThemeTextColor.checked
         showAlphaChannel: false
+    }
+
+    TextField {
+        id: placeholderIconName
+        Kirigami.FormData.label: i18n("Placeholder icon name (empty to disable):")
+        placeholderText: "music-amarok-symbolic"
     }
 
 }

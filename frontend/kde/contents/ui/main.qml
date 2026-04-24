@@ -3,6 +3,7 @@ import QtQuick.Layouts 1.1
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasma5support as Plasma5Support
+import org.kde.kirigami as Kirigami
 import QtWebSockets
 
 PlasmoidItem {
@@ -14,6 +15,7 @@ PlasmoidItem {
         Layout.minimumWidth: text.contentWidth
         Layout.minimumHeight: plasmoid.configuration.layoutHeight
         Layout.preferredWidth: Layout.minimumWidth
+        property bool showPlaceholder: true
 
 
         function updateLayoutSize() {
@@ -40,6 +42,7 @@ PlasmoidItem {
                     case 1:
                         // Update music metadata
                         text.text = ""
+                        oneLineLayout.showPlaceholder = true
                         oneLineLayout.updateLayoutSize()
                         break
                     case 0:
@@ -72,6 +75,7 @@ PlasmoidItem {
                             update_line = update_line.slice(0, plasmoid.configuration.characterLimit) + "..."
                         }
                         text.text = update_line
+                        oneLineLayout.showPlaceholder = (update_line.length == 0)
                         oneLineLayout.updateLayoutSize()
                         break
                 }
@@ -139,6 +143,15 @@ PlasmoidItem {
             color: plasmoid.configuration.shouldUseDefaultThemeTextColor
                  ? PlasmaCore.Theme.textColor
                  : plasmoid.configuration.configuredTextColor
+        }
+
+
+        Kirigami.Icon {
+            source: plasmoid.configuration.placeholderIconName
+            height: plasmoid.configuration.layoutHeight * 0.8
+            width: height
+            anchors.verticalCenter: parent.verticalCenter
+            visible: oneLineLayout.showPlaceholder && plasmoid.configuration.placeholderIconName.length > 0
         }
 
         Plasmoid.contextualActions: [
