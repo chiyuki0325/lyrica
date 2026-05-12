@@ -51,46 +51,83 @@ impl fmt::Display for LyricLine {
         }
     }
 }
+
+fn parse_lrc_line(value: &str) -> Option<LyricLine> {
+    // make sure input is valid lrc line
+    // [01:23.45] Hello world
+    // [01:23:450] Hello world (malformed but we can still parse it)
+
+    let time_end = value.find(']')?;
+
+    let time_str = &value[1..time_end];
+
+    let time_parts = time_str.split(&[':', '.'][..]).collect::<Vec<_>>();
+    if time_parts.len() < 2 {
+        return None;
+    }
+
+    let minutes: u64 = time_parts[0].parse().ok()?;
+    let seconds: u64 = time_parts[1].parse().ok()?;
+    let milliseconds: u64 = if time_parts.len() > 2 {
+        let ms_str = time_parts[2];
+        let ms_u64 = ms_str.parse::<u64>().ok()?;
+        if ms_str.len() == 2 {
+            ms_u64 * 10
+        } else {
+            ms_u64
+        }
+    } else {
+        0
+    };
+
+    let text = value[time_end + 1..].trim().to_string();
+
+    Some(LyricLine {
+        time: minutes * 60000 + seconds * 1000 + milliseconds,
+        text,
+        alt: None,
+    })
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct NeteaseRichLine {
+    t: u64, // milliseconds
+    c: Vec<NeteaseRichLineContent>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct NeteaseRichLineContent {
+    tx: String,
+}
+
+fn parse_netease_rich_line(value: &str) -> Option<LyricLine> {
+    // make sure input is valid netease rich lyric line
+    // {"t":788,"c":[{"tx":"作词: "},{"tx":"xxx"}]}
+
+    let parsed = serde_json::from_str::<NeteaseRichLine>(value).ok()?;
+    let text = parsed
+        .c
+        .into_iter()
+        .map(|c| c.tx)
+        .collect::<Vec<_>>()
+        .join("");
+
+    Some(LyricLine {
+        time: parsed.t,
+        text,
+        alt: None,
+    })
+}
+
 impl TryFrom<&str> for LyricLine {
     type Error = ();
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        // [01:23.45] Hello world
-        // [01:23:450] Hello world (malformed but we can still parse it)
-
-        let time_end = value.find(']').ok_or(())?;
-        if !value.starts_with('[') {
-            return Err(());
+        match value.chars().next() {
+            Some('[') => parse_lrc_line(value).ok_or(()),
+            Some('{') => parse_netease_rich_line(value).ok_or(()),
+            _ => Err(()),
         }
-
-        let time_str = &value[1..time_end];
-
-        let time_parts = time_str.split(&[':', '.'][..]).collect::<Vec<_>>();
-        if time_parts.len() < 2 {
-            return Err(());
-        }
-
-        let minutes: u64 = time_parts[0].parse().map_err(|_| ())?;
-        let seconds: u64 = time_parts[1].parse().map_err(|_| ())?;
-        let milliseconds: u64 = if time_parts.len() > 2 {
-            let ms_str = time_parts[2];
-            let ms_u64 = ms_str.parse::<u64>().map_err(|_| ())?;
-            if ms_str.len() == 2 {
-                ms_u64 * 10
-            } else {
-                ms_u64
-            }
-        } else {
-            0
-        };
-
-        let text = value[time_end + 1..].trim().to_string();
-
-        Ok(LyricLine {
-            time: minutes * 60000 + seconds * 1000 + milliseconds,
-            text,
-            alt: None,
-        })
     }
 }
 
