@@ -27,6 +27,10 @@ impl LyricProvider for NeteaseTrackIDLyricProvider {
             .parse::<u64>()
             .map_err(|_| LyricProviderError::NotSupported)?;
 
+        if music_id < 2 {
+            // fast fail
+            return Err(LyricProviderError::NotSupported);
+        }
         fetch_netease_lyric(music_id, config).await
     }
 }
