@@ -20,6 +20,7 @@ git checkout $(git tag --list "v*" | sort -V | tail -1)
 
 ```bash
 sudo apt install rustup jq qt6-declarative-dev qt6-websockets-dev qml6-module-qtwebsockets libdbus-1-dev
+rustup-init
 rustup toolchain install stable
 ```
 
@@ -27,6 +28,7 @@ rustup toolchain install stable
 
 ```bash
 sudo pacman -S --needed rustup qt6-declarative qt6-websockets jq
+rustup-init
 rustup toolchain install stable
 ```
 
@@ -34,6 +36,7 @@ rustup toolchain install stable
 
 ```bash
 sudo dnf install rustup jq qt6-qtdeclarative qt6-qtdeclarative-devel qt6-qtwebsockets qt6-qtwebsockets-devel dbus-devel
+rustup-init
 rustup toolchain install stable
 ```
 
@@ -41,13 +44,14 @@ rustup toolchain install stable
 
 ```bash
 sudo zypper install rustup jq qt6-declarative qt6-websockets qt6-websockets-imports dbus-1-devel
+rustup-init
 rustup toolchain install stable
 ```
 
 #### 构建
 
 ```bash
-bash frontend/build_plasmoid.sh
+bash frontend/build_kde_plasmoid.sh
 ```
 
 #### 安装
