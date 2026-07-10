@@ -22,6 +22,7 @@ Debian/Ubuntu:
 
 ```bash
 sudo apt install rustup jq qt6-declarative-dev qt6-websockets-dev qml6-module-qtwebsockets libdbus-1-dev
+rustup-init
 rustup toolchain install stable
 ```
 
@@ -29,6 +30,7 @@ Arch Linux:
 
 ```bash
 sudo pacman -S --needed rustup qt6-declarative qt6-websockets jq
+rustup-init
 rustup toolchain install stable
 ````
 
@@ -36,6 +38,7 @@ Fedora:
 
 ```bash
 sudo dnf install rustup jq qt6-qtdeclarative qt6-qtdeclarative-devel qt6-qtwebsockets qt6-qtwebsockets-devel dbus-devel
+rustup-init
 rustup toolchain install stable
 ```
 
@@ -43,13 +46,14 @@ openSUSE:
 
 ```bash
 sudo zypper install rustup jq qt6-declarative qt6-websockets qt6-websockets-imports dbus-1-devel
+rustup-init
 rustup toolchain install stable
 ````
 
 #### Build
 
 ```bash
-bash frontend/build_plasmoid.sh
+bash frontend/build_kde_plasmoid.sh
 ```
 
 #### Install
