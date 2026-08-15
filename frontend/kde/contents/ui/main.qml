@@ -186,7 +186,7 @@ PlasmoidItem {
 
 	    Plasma5Support.DataSource {
 	        id: backendExecutable
-	        readonly property string command: "bash -c '$HOME/.local/share/plasma/plasmoids/ink.chyk.lyricakde/contents/bin/lyrica'"
+	        readonly property string command: "bash -c '/usr/bin/lyrica'"
 		    engine: "executable"
 		    connectedSources: []
 		    onSourceConnected: {
