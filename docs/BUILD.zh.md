@@ -19,7 +19,7 @@ git checkout $(git tag --list "v*" | sort -V | tail -1)
 **Debian/Ubuntu:**
 
 ```bash
-sudo apt install rustup jq qt6-declarative-dev qt6-websockets-dev qml6-module-qtwebsockets libdbus-1-dev
+sudo apt install rustup zstd curl qt6-declarative-dev qt6-websockets-dev qml6-module-qtwebsockets libdbus-1-dev
 rustup-init
 rustup toolchain install stable
 ```
@@ -27,7 +27,7 @@ rustup toolchain install stable
 **Arch Linux:**
 
 ```bash
-sudo pacman -S --needed rustup qt6-declarative qt6-websockets jq
+sudo pacman -S --needed rustup qt6-declarative qt6-websockets zstd curl
 rustup-init
 rustup toolchain install stable
 ```
@@ -35,7 +35,7 @@ rustup toolchain install stable
 **Fedora:**
 
 ```bash
-sudo dnf install rustup jq qt6-qtdeclarative qt6-qtdeclarative-devel qt6-qtwebsockets qt6-qtwebsockets-devel dbus-devel
+sudo dnf install rustup zstd curl qt6-qtdeclarative qt6-qtdeclarative-devel qt6-qtwebsockets qt6-qtwebsockets-devel dbus-devel
 rustup-init
 rustup toolchain install stable
 ```
@@ -43,7 +43,7 @@ rustup toolchain install stable
 **openSUSE:**
 
 ```bash
-sudo zypper install rustup jq qt6-declarative qt6-websockets qt6-websockets-imports dbus-1-devel
+sudo zypper install rustup zstd curl qt6-declarative qt6-websockets qt6-websockets-imports dbus-1-devel
 rustup-init
 rustup toolchain install stable
 ```
