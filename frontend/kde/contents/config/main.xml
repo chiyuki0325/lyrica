@@ -37,6 +37,13 @@
         <entry name="placeholderIconName" type="String">
             <default>music-amarok-symbolic</default>
         </entry>
+        <!-- Display effect: fade the lyric line in and out when it changes -->
+        <entry name="lyricFadeEnabled" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="lyricFadeDurationMs" type="Int">
+            <default>300</default>
+        </entry>
         <!-- TODO: H Alignment -->
         <!-- TODO: V Alignment -->
     </group>
